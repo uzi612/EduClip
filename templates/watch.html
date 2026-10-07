@@ -2,6 +2,10 @@
 {% load static %}
 {% block title %}Watch — EduClip AI{% endblock %}
 
+{% block head %}
+<link rel="stylesheet" href="{% static 'css/chapters.css' %}" />
+{% endblock %}
+
 {% block content %}
 <div id="pageError" class="hidden rounded-2xl border border-red-500/40 bg-red-950/40 p-6 text-center">
   <p id="pageErrorMsg" class="font-semibold">Could not load this video.</p>

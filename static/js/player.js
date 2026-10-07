@@ -97,9 +97,16 @@
       currentChapter = idx;
       var rows = document.querySelectorAll(".chapter-row");
       for (var j = 0; j < rows.length; j++) {
-        rows[j].classList.toggle("ring-2", j === idx);
-        rows[j].classList.toggle("ring-violet-500", j === idx);
-        rows[j].classList.toggle("border-violet-500/50", j === idx);
+        var active = j === idx;
+        rows[j].classList.toggle("ring-2", active);
+        rows[j].classList.toggle("ring-violet-500", active);
+        rows[j].classList.toggle("border-violet-500/50", active);
+        var seekBtn = rows[j].querySelector(".chapter-seek");
+        if (seekBtn) {
+          if (active) seekBtn.setAttribute("aria-current", "true");
+          else seekBtn.removeAttribute("aria-current");
+        }
+        setRowOpen(rows[j], active); // auto-expand the active chapter (single-open)
       }
       var toast = $("chapterToast");
       if (toast) {
@@ -127,10 +134,32 @@
     return out;
   }
 
-  function rowHTML(c) {
+  function setRowOpen(row, open) {
+    row.classList.toggle("open", open);
+    var t = row.querySelector(".chapter-toggle");
+    if (t) t.setAttribute("aria-expanded", String(open));
+  }
+
+  // Accordion toggles (separate from the single [data-seek] listener below).
+  document.addEventListener("click", function (e) {
+    var toggle = e.target.closest(".chapter-toggle");
+    if (!toggle) return;
+    var row = toggle.closest(".chapter-row");
+    if (!row) return;
+    setRowOpen(row, !row.classList.contains("open"));
+  });
+
+  function rowHTML(c, i) {
     var dur = Math.max(0, (Number(c.end_sec) || 0) - (Number(c.start_sec) || 0));
+    var keywords = (c.keyword_refs || [])
+      .map(function (k) {
+        return '<span class="px-2 py-0.5 rounded-full border border-cyan-500/30 bg-cyan-500/10 text-cyan-300 text-xs font-mono">' + esc(k) + "</span>";
+      })
+      .join("");
     return (
-      '<button type="button" data-seek="' + esc(c.start_sec) + '" class="chapter-row w-full text-left p-4 rounded-xl border border-slate-800 bg-slate-900/50 hover:border-violet-500/50 transition group">' +
+      '<div class="chapter-row rounded-xl border border-slate-800 bg-slate-900/50 overflow-hidden transition">' +
+      '<div class="flex items-stretch">' +
+      '<button type="button" data-seek="' + esc(c.start_sec) + '" aria-label="Play chapter: ' + esc(c.title || "Untitled chapter") + '" class="chapter-seek flex-1 min-w-0 text-left p-4 hover:bg-white/[0.02] transition group">' +
       '<div class="flex justify-between text-sm"><span class="font-mono text-cyan-400">' +
       esc(fmtStamp(c.start_sec)) +
       '</span><span class="text-gray-500 font-mono">' +
@@ -140,9 +169,20 @@
       esc(c.title || "Untitled chapter") +
       "</div>" +
       (c.summary
-        ? '<p class="text-sm text-gray-400 line-clamp-2 mt-1">' + esc(c.summary) + "</p>"
+        ? '<p class="chapter-preview text-sm text-gray-400 line-clamp-2 mt-1">' + esc(c.summary) + "</p>"
         : "") +
-      "</button>"
+      "</button>" +
+      '<button type="button" class="chapter-toggle shrink-0 px-3 text-gray-500 hover:text-gray-100 transition" aria-expanded="false" aria-controls="chapter-detail-' + i + '" aria-label="Expand chapter details">' +
+      '<svg class="chapter-chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>' +
+      "</button></div>" +
+      '<div id="chapter-detail-' + i + '" class="chapter-detail"><div>' +
+      '<div class="px-4 pb-4 pt-1 space-y-3 border-t border-slate-800/70">' +
+      (c.summary ? '<p class="text-sm text-gray-300 leading-relaxed">' + esc(c.summary) + "</p>" : "") +
+      (keywords ? '<div class="flex flex-wrap gap-1.5">' + keywords + "</div>" : "") +
+      '<div class="flex items-center justify-between gap-2">' +
+      '<span class="text-xs font-mono text-gray-500">' + esc(fmtStamp(c.start_sec)) + " → " + esc(fmtStamp(c.end_sec)) + "</span>" +
+      '<button type="button" data-seek="' + esc(c.start_sec) + '" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-gradient-to-r from-violet-600 to-cyan-500 hover:opacity-90 transition whitespace-nowrap">▶ Play from ' + esc(fmtStamp(c.start_sec)) + "</button>" +
+      "</div></div></div></div></div>"
     );
   }
 
@@ -155,9 +195,17 @@
     var count = $("chapterCount");
     if (count) count.textContent = chapters.length ? chapters.length + " chapters" : "";
     if (!wrap) return;
-    wrap.innerHTML = chapters.length
-      ? chapters.map(rowHTML).join("")
-      : '<p class="text-sm text-gray-500 rounded-xl border border-dashed border-slate-800 p-6 text-center">No chapters yet for this video.</p>';
+    if (!chapters.length) {
+      wrap.innerHTML = '<p class="text-sm text-gray-500 rounded-xl border border-dashed border-slate-800 p-6 text-center">No chapters yet for this video.</p>';
+      return;
+    }
+    wrap.innerHTML = chapters
+      .map(function (c, i) {
+        return rowHTML(c, i);
+      })
+      .join("");
+    var first = wrap.querySelector(".chapter-row");
+    if (first) setRowOpen(first, true); // first chapter expanded by default
   };
 
   function renderHeader(v) {

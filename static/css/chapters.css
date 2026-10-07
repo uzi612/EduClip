@@ -1,0 +1,52 @@
+/* static/css/chapters.css — chapter accordion + mobile chips (FRONTEND-03) */
+
+/* Accordion detail: animated open/close via grid-rows (GPU-cheap, no fixed heights) */
+.chapter-detail {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.25s ease-out;
+}
+.chapter-detail > div {
+  overflow: hidden;
+  min-height: 0;
+}
+.chapter-row.open .chapter-detail {
+  grid-template-rows: 1fr;
+}
+
+.chapter-chev {
+  transition: transform 0.25s ease-out;
+}
+.chapter-row.open .chapter-chev {
+  transform: rotate(180deg);
+}
+
+/* Mobile (<640px): chapters become a horizontal chip strip (spec §10) */
+@media (max-width: 639px) {
+  #chapterList {
+    display: flex;
+    gap: 0.5rem;
+    overflow-x: auto;
+    overflow-y: hidden;
+    max-height: none;
+    padding-bottom: 0.25rem;
+    scroll-snap-type: x mandatory;
+  }
+  #chapterList .chapter-row {
+    flex: 0 0 auto;
+    width: 15rem;
+    scroll-snap-align: start;
+  }
+  #chapterList .chapter-preview,
+  #chapterList .chapter-detail,
+  #chapterList .chapter-toggle {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chapter-detail,
+  .chapter-chev {
+    transition: none;
+  }
+}
