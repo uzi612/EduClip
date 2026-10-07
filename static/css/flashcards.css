@@ -1,0 +1,45 @@
+/* static/css/flashcards.css — 3D card-flip (GPU-friendly rotateY, no library) */
+.flash-scene {
+  perspective: 1200px;
+}
+
+.flash-inner {
+  position: relative;
+  width: 100%;
+  height: 220px;
+  transform-style: preserve-3d;
+  transition: transform 0.6s cubic-bezier(0.2, 0.7, 0.3, 1.2);
+  cursor: pointer;
+}
+
+.flash-scene.flipped .flash-inner {
+  transform: rotateY(180deg);
+}
+
+.flash-face {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 1.5rem;
+  border-radius: 1rem;
+  border: 1px solid #1e293b;
+}
+
+.flash-front {
+  background: linear-gradient(135deg, #0f172a, #1e1b4b);
+}
+
+.flash-back {
+  background: linear-gradient(135deg, #4c1d95, #0e7490);
+  transform: rotateY(180deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .flash-inner {
+    transition: none;
+  }
+}

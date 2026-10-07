@@ -1,0 +1,36 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="EduClip AI — Turn any YouTube video into an interactive course." />
+  <title>{% block title %}EduClip AI{% endblock %}</title>
+
+  <!-- Fonts: Inter (display/body) + JetBrains Mono (timestamps/IDs) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
+    rel="stylesheet"
+  />
+
+  <!-- Compiled Tailwind (build: npx tailwindcss -i ./static/css/base.css -o ./static/css/output.css) -->
+  <link rel="stylesheet" href="{% static 'css/output.css' %}" />
+  <link rel="stylesheet" href="{% static 'css/flashcards.css' %}" />
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="https://www.youtube.com/iframe_api"></script>
+  {% block head %}{% endblock %}
+</head>
+<body class="bg-void text-gray-100 font-sans antialiased min-h-screen">
+  {% include "partials/navbar.html" %}
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    {% block content %}{% endblock %}
+  </main>
+  {% include "partials/footer.html" %}
+  {% include "partials/toast.html" %}
+  <script src="{% static 'js/api.js' %}"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}EduClip AI — Turn any YouTube video into a course{% endblock %}
+
+{% block content %}
+<section class="text-center py-16 animate-fade-up">
+  <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-violet-500/30 bg-violet-500/10 text-violet-300 text-sm">
+    ✨ AI-powered video learning
+  </div>
+  <h1 class="mt-6 text-5xl font-extrabold tracking-tight">
+    Turn any <span class="bg-gradient-to-r from-violet-400 to-cyan-400 bg-clip-text text-transparent">YouTube video</span><br />into a course
+  </h1>
+  <form id="intakeForm" class="mt-8 max-w-2xl mx-auto flex gap-2 p-2 rounded-2xl border border-slate-800 bg-slate-900/70">
+    <input
+      id="youtubeUrl"
+      type="url"
+      required
+      placeholder="Paste YouTube URL… (e.g. youtube.com/watch?v=...)"
+      class="flex-1 min-w-0 bg-transparent px-4 py-3 outline-none placeholder:text-gray-500"
+    />
+    <button class="px-6 py-3 rounded-xl font-semibold bg-gradient-to-r from-violet-600 to-cyan-500 hover:opacity-90 transition whitespace-nowrap">
+      Analyze →
+    </button>
+  </form>
+  <div id="progressWrap" class="hidden mt-6 max-w-2xl mx-auto">
+    <div class="flex justify-between text-sm text-gray-400"><span id="progressLabel">Fetching transcript…</span><span id="progressPct" class="font-mono">5%</span></div>
+    <div class="h-2 mt-2 rounded-full bg-slate-800 overflow-hidden">
+      <div id="progressBar" class="h-full w-0 bg-gradient-to-r from-violet-500 to-cyan-400 transition-all duration-500"></div>
+    </div>
+  </div>
+</section>
+
+<section id="how-it-works" class="grid sm:grid-cols-3 gap-4 mt-4 text-left">
+  <div class="rounded-2xl border border-slate-800 bg-slate-900/70 p-6">
+    <div class="text-2xl">🔗</div>
+    <h2 class="mt-2 font-semibold">1. Paste a link</h2>
+    <p class="mt-1 text-sm text-gray-400">Any public YouTube video — lectures, talks, tutorials.</p>
+  </div>
+  <div class="rounded-2xl border border-slate-800 bg-slate-900/70 p-6">
+    <div class="text-2xl">🧠</div>
+    <h2 class="mt-2 font-semibold">2. AI analyzes it</h2>
+    <p class="mt-1 text-sm text-gray-400">Chapters, summary, keywords and flashcards in about a minute.</p>
+  </div>
+  <div class="rounded-2xl border border-slate-800 bg-slate-900/70 p-6">
+    <div class="text-2xl">🎓</div>
+    <h2 class="mt-2 font-semibold">3. Learn interactively</h2>
+    <p class="mt-1 text-sm text-gray-400">Jump to chapters, flip flashcards, explore visual analytics.</p>
+  </div>
+</section>
+
+<section id="recentGrid" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-12" aria-label="Recent videos"></section>
+{% endblock %}
