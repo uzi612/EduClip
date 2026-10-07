@@ -1,0 +1,12 @@
+{
+  "name": "transcript_search",
+  "collectionName": "videos",
+  "mappings": {
+    "dynamic": false,
+    "fields": {
+      "title": { "type": "string" },
+      "full_text": { "type": "string" },
+      "chapters.title": { "type": "string" }
+    }
+  }
+}
