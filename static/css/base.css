@@ -1,0 +1,54 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html.dark body {
+  background: #030712;
+  color: #f3f4f6;
+}
+
+/* Guard against horizontal scroll on 360px mobile (SETUP-02 acceptance) */
+html,
+body {
+  max-width: 100%;
+  overflow-x: clip;
+}
+
+img,
+video,
+canvas,
+iframe {
+  max-width: 100%;
+}
+
+::selection {
+  background: rgba(139, 92, 246, 0.4);
+}
+
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+*::-webkit-scrollbar-thumb {
+  background: #1e293b;
+  border-radius: 8px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Visible keyboard focus (WCAG 2.1 AA) */
+:focus-visible {
+  outline: 2px solid #8b5cf6;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
