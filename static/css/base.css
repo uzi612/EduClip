@@ -52,3 +52,46 @@ iframe {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Light theme (opt-in via #themeToggle; dark remains the default).
+   Overrides the dark-first surfaces used by the landing shell. */
+html:not(.dark) body {
+  background: #f8fafc;
+  color: #0f172a;
+}
+html:not(.dark) .bg-void {
+  background: #f8fafc;
+}
+html:not(.dark) header {
+  background: rgba(255, 255, 255, 0.8);
+}
+html:not(.dark) .bg-slate-900\/70 {
+  background: rgba(255, 255, 255, 0.7);
+}
+html:not(.dark) .bg-slate-900\/50 {
+  background: rgba(255, 255, 255, 0.6);
+}
+html:not(.dark) .bg-slate-800 {
+  background: #e2e8f0;
+}
+html:not(.dark) .border-slate-800 {
+  border-color: #e2e8f0;
+}
+html:not(.dark) .text-gray-100 {
+  color: #0f172a;
+}
+html:not(.dark) .text-gray-300 {
+  color: #334155;
+}
+html:not(.dark) .text-gray-400 {
+  color: #64748b;
+}
+html:not(.dark) .text-gray-500 {
+  color: #64748b;
+}
+html:not(.dark) .placeholder\:text-gray-500::placeholder {
+  color: #94a3b8;
+}
+html:not(.dark) *::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+}

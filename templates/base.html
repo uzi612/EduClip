@@ -7,6 +7,15 @@
   <meta name="description" content="EduClip AI — Turn any YouTube video into an interactive course." />
   <title>{% block title %}EduClip AI{% endblock %}</title>
 
+  <!-- Theme: dark is default (v1); restore saved preference before paint to avoid FOUC -->
+  <script>
+    try {
+      if (localStorage.getItem("educlip-theme") === "light") {
+        document.documentElement.classList.remove("dark");
+      }
+    } catch (e) { /* private mode: stay dark */ }
+  </script>
+
   <!-- Fonts: Inter (display/body) + JetBrains Mono (timestamps/IDs) -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -31,6 +40,7 @@
   {% include "partials/footer.html" %}
   {% include "partials/toast.html" %}
   <script src="{% static 'js/api.js' %}"></script>
+  <script src="{% static 'js/theme.js' %}"></script>
   {% block scripts %}{% endblock %}
 </body>
 </html>
