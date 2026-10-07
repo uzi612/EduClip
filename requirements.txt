@@ -1,0 +1,13 @@
+Django>=5.0,<6.0
+djangorestframework>=3.15
+django-cors-headers>=4.3
+celery>=5.3
+redis>=5.0
+pymongo>=4.8
+mongoengine>=0.29
+youtube-transcript-api>=1.0
+# Optional fallback tiers (BACKEND-01 T2/T3):
+# yt-dlp
+# faster-whisper
+python-dotenv>=1.0
+gunicorn>=22.0

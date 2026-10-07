@@ -1,14 +1,17 @@
-# Node / Tailwind
-node_modules/
-npm-debug.log*
-
-# Django / Python (SETUP-01 owns the full scaffold; reserved here so `collectstatic` output stays untracked)
+# Python / Django
 __pycache__/
 *.py[cod]
 .venv/
+venv/
 .env
-staticfiles/
+db.sqlite3
 *.sqlite3
+/staticfiles/
+
+# Node / Tailwind (SETUP-02 build)
+node_modules/
+npm-debug.log*
+/static/css/output.css
 
 # OS / editors
 .DS_Store
