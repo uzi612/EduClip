@@ -127,9 +127,9 @@
     for (var i = 0; i < 5; i++) {
       out +=
         '<div class="p-4 rounded-xl border border-slate-800 bg-slate-900/50">' +
-        '<div class="h-3 w-24 rounded animate-pulse bg-slate-800"></div>' +
-        '<div class="mt-2 h-4 rounded animate-pulse bg-slate-800"></div>' +
-        '<div class="mt-2 h-3 w-2/3 rounded animate-pulse bg-slate-800"></div></div>';
+        '<div class="skel h-3 w-24"></div>' +
+        '<div class="skel mt-2 h-4"></div>' +
+        '<div class="skel mt-2 h-3 w-2/3"></div></div>';
     }
     return out;
   }
@@ -220,6 +220,21 @@
       meta.textContent = bits.join(" · ");
     }
     document.title = (v.title || "Watch") + " — EduClip AI";
+    var banner = $("degradedBanner");
+    if (banner) {
+      if (v.degraded) {
+        banner.classList.remove("hidden");
+        var detail = $("degradedDetail");
+        if (detail) {
+          detail.textContent =
+            v.transcript_source === "whisper_fallback"
+              ? "audio transcription fallback was used; timestamps may be approximate."
+              : "a fallback path was used; some sections may be approximate.";
+        }
+      } else {
+        banner.classList.add("hidden");
+      }
+    }
   }
 
   function showFatal(msg) {
