@@ -34,9 +34,28 @@
       <div id="chapterList" class="space-y-2 max-h-[600px] overflow-y-auto pr-1"></div>
     </aside>
   </div>
+
+  <section class="mt-8" aria-label="Flashcards">
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <h2 class="text-lg font-bold tracking-tight">Flashcards</h2>
+      <div class="flex items-center gap-2">
+        <span id="flashCounter" class="text-xs font-mono text-gray-500" aria-live="polite"></span>
+        <button id="flashPrev" type="button" aria-label="Previous flashcard" class="grid place-items-center w-9 h-9 rounded-xl border border-slate-800 bg-slate-900/70 text-gray-400 hover:text-gray-100 hover:border-violet-500/50 transition">←</button>
+        <button id="flashNext" type="button" aria-label="Next flashcard" class="grid place-items-center w-9 h-9 rounded-xl border border-slate-800 bg-slate-900/70 text-gray-400 hover:text-gray-100 hover:border-violet-500/50 transition">→</button>
+        <button id="flashShuffle" type="button" class="px-3 py-2 rounded-xl text-sm border border-slate-800 bg-slate-900/70 text-gray-400 hover:text-gray-100 hover:border-violet-500/50 transition">Shuffle</button>
+      </div>
+    </div>
+    <div id="flashDeck" class="mt-4 grid sm:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+    <div id="flashEmpty" class="hidden mt-4 rounded-2xl border border-dashed border-slate-800 p-10 text-center">
+      <div class="text-3xl">🃏</div>
+      <p class="mt-3 font-semibold">No flashcards yet</p>
+      <p class="mt-1 text-sm text-gray-400">Cards appear here once the video finishes processing.</p>
+    </div>
+  </section>
 </div>
 {% endblock %}
 
 {% block scripts %}
 <script src="{% static 'js/player.js' %}"></script>
+<script src="{% static 'js/flashcards.js' %}"></script>
 {% endblock %}
