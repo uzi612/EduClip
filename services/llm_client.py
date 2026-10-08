@@ -8,12 +8,22 @@ See docs/ARCHITECTURE.md §6.
 """
 import hashlib
 import json
+import random
 import time
 
 OPENAI_MODEL = "gpt-4o-mini"
 OPENAI_TIMEOUT_SEC = 60
 MAX_TRANSCRIPT_SEGMENTS = 800
 MAX_RETRIES = 2
+# Exponential backoff for LLM timeouts/quota (BACKEND-06): delay before the
+# retry following attempt N is BACKOFF_BASE_SEC * 2**N plus up to 1s jitter
+# so concurrent workers do not thundering-herd the provider.
+BACKOFF_BASE_SEC = 1.0
+BACKOFF_JITTER_SEC = 1.0
+
+
+def _backoff_delay(attempt):
+    return BACKOFF_BASE_SEC * (2 ** attempt) + random.uniform(0, BACKOFF_JITTER_SEC)
 
 SYSTEM_PROMPT = """You are EduClip, an education analyst. Given a video transcript with
 timestamps, return STRICT JSON with exactly these keys:
@@ -164,7 +174,7 @@ def analyze_video(segments, title, provider=None, use_cache=True):
             last_error = exc
             if not exc.retryable:
                 raise
-            time.sleep(2 ** attempt)
+            time.sleep(_backoff_delay(attempt))
     raise last_error
 
 
