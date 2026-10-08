@@ -40,3 +40,41 @@ def get_or_create_video(youtube_id, metadata, idempotency_key=""):
         idempotency_key=idempotency_key,
     ).save()
     return video, True
+
+
+def delete_video_records(video):
+    """Delete a video and all related docs (BACKEND-04 DELETE).
+
+    Uses a multi-document transaction when an Atlas URI is configured
+    (replica set required); otherwise deletes sequentially. Overflow buckets
+    are best-effort — their absence never fails the delete.
+    """
+    from django.conf import settings
+
+    from apps.analytics.models import Analytics
+    from apps.flashcards.models import Flashcard
+
+    vid = video.id
+    if getattr(settings, "MONGODB_ATLAS_URI", ""):
+        try:
+            from services.mongo import get_db
+
+            db = get_db()
+            with db.client.start_session() as session:
+                with session.start_transaction():
+                    db.videos.delete_one({"_id": vid}, session=session)
+                    db.analytics.delete_many({"video_id": vid}, session=session)
+                    db.flashcards.delete_many({"video_id": vid}, session=session)
+                    db.transcripts_overflow.delete_many({"video_id": vid}, session=session)
+            return
+        except Exception:
+            pass
+    Flashcard.objects(video_id=video).delete()
+    Analytics.objects(video_id=video).delete()
+    try:
+        from services.mongo import get_db
+
+        get_db().transcripts_overflow.delete_many({"video_id": vid})
+    except Exception:
+        pass
+    video.delete()
