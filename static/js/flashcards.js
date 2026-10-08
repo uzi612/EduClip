@@ -94,7 +94,7 @@
   function skeletonHTML() {
     var out = "";
     for (var i = 0; i < 6; i++) {
-      out += '<div class="h-[220px] rounded-2xl animate-pulse bg-slate-800/60"></div>';
+      out += '<div class="skel skel-flash"></div>';
     }
     return out;
   }

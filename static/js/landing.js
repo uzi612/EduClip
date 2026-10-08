@@ -94,16 +94,26 @@
 
   function submitError(err) {
     resetProgress();
-    var retryable = Boolean(err && (err.retryable || err.code === "OFFLINE" || err.status === 429));
-    var action = retryable
-      ? {
-          label: "Retry",
-          onClick: function () {
-            if (form && typeof form.requestSubmit === "function") form.requestSubmit();
-          },
-        }
-      : undefined;
-    showToast((err && err.message) || "Something went wrong.", "error", action);
+    var code = err && err.code;
+    var resubmit = function () {
+      if (form && typeof form.requestSubmit === "function") form.requestSubmit();
+    };
+    // Terminal failures get a focus-trapped modal with Retry; the rest get toasts.
+    if ((code === "PROCESSING_FAILED" || code === "POLL_TIMEOUT") && typeof window.showModal === "function") {
+      window.showModal({
+        title: code === "POLL_TIMEOUT" ? "Taking too long" : "Processing failed",
+        message: (err && err.message) || "Something went wrong.",
+        retryLabel: "Retry",
+        onRetry: resubmit,
+      });
+      return;
+    }
+    var retryable = Boolean(err && err.retryable);
+    showToast(
+      (err && err.message) || "Something went wrong.",
+      "error",
+      retryable ? { label: "Retry", onClick: resubmit } : undefined
+    );
   }
 
   function onSubmit(e) {
@@ -169,9 +179,9 @@
     for (var i = 0; i < 6; i++) {
       out +=
         '<div class="rounded-2xl border border-slate-800 bg-slate-900/50 overflow-hidden">' +
-        '<div class="aspect-video animate-pulse bg-slate-800"></div>' +
-        '<div class="p-4 space-y-2"><div class="h-4 rounded animate-pulse bg-slate-800"></div>' +
-        '<div class="h-3 w-2/3 rounded animate-pulse bg-slate-800"></div></div></div>';
+        '<div class="skel skel-aspect-video"></div>' +
+        '<div class="p-4 space-y-2"><div class="skel h-4"></div>' +
+        '<div class="skel h-3 w-2/3"></div></div></div>';
     }
     return out;
   }
