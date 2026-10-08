@@ -1,10 +1,18 @@
 from django.urls import path
 
-from . import views
+from . import views, views_retrieval as retrieval
 
 urlpatterns = [
     path("health/", views.health, name="health"),
     # Both spellings: a POST redirected by APPEND_SLASH would lose its body.
     path("process-video", views.process_video, name="process-video"),
     path("process-video/", views.process_video, name="process-video-slash"),
+    path("videos/", retrieval.videos_list, name="videos-list"),
+    path("video/<str:video_id>/", retrieval.video_detail, name="video-detail"),
+    path("video/<str:video_id>/chapters", retrieval.video_chapters,
+         name="video-chapters"),
+    path("video/<str:video_id>/flashcards", retrieval.video_flashcards,
+         name="video-flashcards"),
+    path("video/<str:video_id>/analytics", retrieval.video_analytics,
+         name="video-analytics"),
 ]
