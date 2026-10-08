@@ -1,9 +1,13 @@
-"""Health endpoint (SETUP-01): GET /api/v1/health/."""
+"""API v1 views: health (SETUP-01) + video processing (BACKEND-03)."""
 import time
 
 from django.conf import settings
-from rest_framework.decorators import api_view
+from mongoengine.errors import ValidationError as MongoValidationError
+from rest_framework.decorators import api_view, throttle_classes
 from rest_framework.response import Response
+
+from apps.api_v1.serializers import ProcessVideoSerializer
+from apps.api_v1.throttles import ProcessVideoThrottle
 
 
 def _check_redis():
@@ -16,6 +20,67 @@ def _check_redis():
         return True, int((time.perf_counter() - start) * 1000)
     except Exception:
         return False, None
+
+
+@api_view(["POST"])
+@throttle_classes([ProcessVideoThrottle])
+def process_video(request):
+    """Submit a YouTube URL for async processing (BACKEND-03).
+
+    202 new/processing job, 200 already-ready dedupe, 400 invalid URL,
+    422 unavailable video, 429 throttled, 503 DB unconfigured.
+    Heavy work always runs in Celery — this view only validates,
+    dedupes, persists the queued record, and dispatches the task.
+    See docs/API_SPECIFICATION.md §3.
+    """
+    from apps.videos.db import ensure_mongoengine
+    from apps.videos.tasks import process_video_task
+    from apps.videos.video_service import get_or_create_video
+    from services.youtube import TranscriptUnavailableError, get_video_metadata
+
+    try:
+        ensure_mongoengine()
+    except RuntimeError as exc:
+        return Response({"error": {"code": "SERVICE_UNAVAILABLE", "message": str(exc),
+                                    "retryable": True}}, status=503)
+
+    serializer = ProcessVideoSerializer(data=request.data)
+    if not serializer.is_valid():
+        errors = serializer.errors
+        code = "INVALID_URL" if set(errors) == {"youtube_url"} else "VALIDATION_ERROR"
+        return Response({"error": {"code": code, "message": "; ".join(
+            f"{f}: {', '.join(map(str, m))}" for f, m in errors.items()),
+            "details": {"fields": errors}}}, status=400)
+
+    youtube_id = serializer.youtube_id
+    idempotency_key = request.headers.get("Idempotency-Key", "")
+    try:
+        metadata = get_video_metadata(youtube_id)
+    except TranscriptUnavailableError as exc:
+        return Response({"error": {"code": "VIDEO_UNAVAILABLE", "message": str(exc),
+                                    "retryable": exc.retryable}}, status=422)
+    try:
+        video, created = get_or_create_video(
+            youtube_id, metadata, idempotency_key=idempotency_key)
+    except MongoValidationError as exc:
+        return Response({"error": {"code": "VIDEO_UNAVAILABLE",
+                                    "message": f"Video metadata incomplete: {exc}",
+                                    "retryable": False}}, status=422)
+
+    video_id = str(video.id)
+    poll_url = f"/api/v1/video/{video_id}/"
+    if not created and video.status == "ready":
+        return Response({"video_id": video_id, "youtube_id": youtube_id,
+                         "status": "ready", "poll_url": poll_url}, status=200)
+    if not created:
+        return Response({"video_id": video_id, "youtube_id": youtube_id,
+                         "status": video.status, "progress": video.progress,
+                         "poll_url": poll_url}, status=202)
+    task = process_video_task.delay(video_id)
+    video.update(set__task_id=task.id)
+    return Response({"video_id": video_id, "youtube_id": youtube_id, "task_id": task.id,
+                     "status": "processing", "progress": 0.05, "poll_url": poll_url,
+                     "estimated_seconds": 45}, status=202)
 
 
 @api_view(["GET"])
