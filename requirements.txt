@@ -8,8 +8,11 @@ mongoengine>=0.29
 youtube-transcript-api>=1.0
 openai>=1.0
 # Optional: google-generativeai (Gemini adapter via LLM_PROVIDER=gemini)
-# Optional fallback tiers (BACKEND-01 T2/T3):
-# yt-dlp
+# Keyless metadata fallback + local review (no YOUTUBE_API_KEY needed):
+yt-dlp
+# In-memory Mongo for tests and config/settings/dev.py local review:
+mongomock
+# Optional audio fallback tier (BACKEND-01 T3):
 # faster-whisper
 python-dotenv>=1.0
 gunicorn>=22.0

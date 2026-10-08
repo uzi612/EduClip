@@ -143,6 +143,17 @@ def test_orchestrator_falls_back_to_whisper():
     assert source == "whisper_fallback" and full == "audio words" and cleaned[0]["start"] == 0.0
 
 
+def test_long_cue_splits_without_loss():
+    # Regression: real auto-caption cues can exceed the 500-char document cap
+    # (video IecCQPX-QsI failed the whole pipeline before this).
+    long_text = ("Sentence one about portfolios. Sentence two about interviews. " * 20).strip()
+    segs, _ = normalize_segments([{"start": 10.0, "duration": 120.0, "text": long_text}])
+    assert len(segs) > 1 and all(len(s["text"]) <= 490 for s in segs)
+    assert " ".join(s["text"] for s in segs) == long_text
+    assert segs[0]["start"] == 10.0
+    assert segs[-1]["start"] + segs[-1]["duration"] == 130.0
+
+
 if __name__ == "__main__":
     for name, fn in sorted([(k, v) for k, v in globals().items() if k.startswith("test_")]):
         fn()

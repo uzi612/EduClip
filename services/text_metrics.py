@@ -7,8 +7,17 @@ compute reading stats and complexity metrics for the analytics payload.
 import re
 from collections import Counter
 
-WORD_RE = re.compile(r"[A-Za-z0-9]+(?:'[A-Za-z0-9]+)?")
-SENTENCE_RE = re.compile(r"[^.!?]+[.!?]")
+# Unicode-aware word pattern: a leading letter plus letters/digits and
+# combining marks. Marks matter: Devanagari vowel signs/virama (U+0900-097F
+# block) are non-\w, so plain \w shatters Hindi words into <=2-char fragments
+# that the len>2 keyword filter then drops entirely. Indic + Latin diacritic
+# ranges below keep such words whole. Pure numbers are not tokens.
+_MARKS = ("\u0300-\u036f"  # combining diacriticals
+          "\u0900-\u097f\u0980-\u09ff\u0a00-\u0a7f\u0a80-\u0aff"  # Indic scripts
+          "\u0b00-\u0b7f\u0b80-\u0bff\u0c00-\u0c7f\u0c80-\u0cff\u0d00-\u0d7f"
+          "\u200c\u200d")  # zero-width joiners inside conjuncts
+WORD_RE = re.compile(r"[^\W\d_][\w" + _MARKS + r"]*(?:'[\w]+)?", re.UNICODE)
+SENTENCE_RE = re.compile(r"[^.!?।]+[.!?।]")
 MIN_KEYWORD_SCORE = 0.15
 
 STOPWORDS = frozenset(
@@ -17,12 +26,19 @@ STOPWORDS = frozenset(
     "all any both each few more most other some such no nor not only own same "
     "so than too very can will just don should now is are was were be been "
     "being have has had having do does did doing would could ought i you he "
-    "she it we they them his her its our your their this that these those as".split()
+    "she it we they them his her its our your their this that these those as "
+    # high-frequency Hindi function words (Devanagari transcripts)
+    "ke ki ka ko se ne par hai hain tha the thi ye vo ye yehi vahi jo so "
+    "aur lekin kyonki jab tab abhi bhi nahi nahin kya kaise jaise vaise "
+    "mein main hum tum aap yah vah ise use inhe unhe iska uska apna apni "
+    "apne karte karta karti karna hoga honge hota hote hoti gaya gayi gaye "
+    "kiya kiya gaya liye taraf jaisa doston aaj bahut zyada thoda sab kuch "
+    "koi koi bhi".split()
 )
 
 
 def tokenize(text):
-    """Lowercase word tokens for scoring (keeps contractions)."""
+    """Lowercase word tokens for scoring (keeps contractions, Unicode-aware)."""
     return WORD_RE.findall((text or "").lower())
 
 
