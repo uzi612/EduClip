@@ -275,6 +275,9 @@
   function hydrate(data) {
     renderHeader(data);
     store.setVideo(data); // -> chapters (+ flashcards when present) via the store
+    if (typeof window.renderCharts === "function") {
+      window.renderCharts(data.graphs, data.video_id);
+    }
     window.EDUCLIP.youtubeId = data.youtube_id;
     initPlayer();
     if (data.flashcards === undefined && typeof window.renderFlashcards === "function") {
