@@ -4,7 +4,7 @@
 (function () {
   "use strict";
 
-  var POLL_MS = 3000;
+  // Polling cadence lives in api.pollVideo (3s tick, 5-min timeout).
   var SYNC_MS = 1000;
 
   var player = null;
@@ -257,32 +257,40 @@
     if (retry) retry.addEventListener("click", fetchVideo);
   }
 
+  function hydrate(data) {
+    renderHeader(data);
+    store.setVideo(data); // -> chapters (+ flashcards when present) via the store
+    window.EDUCLIP.youtubeId = data.youtube_id;
+    initPlayer();
+    if (data.flashcards === undefined && typeof window.renderFlashcards === "function") {
+      // Payload had no cards — fall back to the dedicated endpoint.
+      window.renderFlashcards(undefined, data.video_id);
+    }
+  }
+
   function fetchVideo() {
     hideFatal();
     api
       .get("/video/" + encodeURIComponent(videoId) + "/")
       .then(function (data) {
+        if (data.status === "ready") {
+          hydrate(data);
+          return;
+        }
         if (data.status === "failed") {
           var msg =
             (data.error && data.error.message) || "Processing failed. Please try another video.";
           showFatal(msg);
           return;
         }
+        // Still processing: render what we have, then poll to ready.
         renderHeader(data);
-        store.setVideo(data); // -> renderChapters via api.js store hook
-        if (typeof window.renderFlashcards === "function") {
-          window.renderFlashcards(data.flashcards, data.video_id);
-        }
-        if (data.status === "ready") {
-          window.EDUCLIP.youtubeId = data.youtube_id;
-          initPlayer();
-          return;
-        }
-        // Still processing: keep skeletons, poll until terminal state.
-        setTimeout(fetchVideo, POLL_MS);
+        store.setVideo(data);
+        return api.pollVideo(videoId, {}).then(hydrate);
       })
       .catch(function (err) {
-        showFatal(err.message || "Could not load this video. The API may not be up yet.");
+        // Offline / 429 / timeout / failed — message plus the Retry button.
+        showFatal((err && err.message) || "Could not load this video. The API may not be up yet.");
       });
   }
 

@@ -5,8 +5,7 @@
   "use strict";
 
   var YOUTUBE_RE = /(?:v=|youtu\.be\/|shorts\/)([A-Za-z0-9_-]{11})/;
-  var POLL_MS = 3000;
-  var POLL_MAX = 100; // ~5 minutes
+  // Polling cadence lives in api.pollVideo (3s tick, 5-min timeout).
 
   var LABELS = {
     queued: "Queued…",
@@ -93,29 +92,18 @@
     if (progressBar) progressBar.style.width = "0%";
   }
 
-  function pollUntilReady(videoId, attempt) {
-    attempt = attempt || 0;
-    return api
-      .get("/video/" + videoId + "/")
-      .then(function (data) {
-        if (data.status === "ready") {
-          setProgress("ready", 1);
-          window.location.href = "/watch/" + data.video_id + "/";
-          return;
+  function submitError(err) {
+    resetProgress();
+    var retryable = Boolean(err && (err.retryable || err.code === "OFFLINE" || err.status === 429));
+    var action = retryable
+      ? {
+          label: "Retry",
+          onClick: function () {
+            if (form && typeof form.requestSubmit === "function") form.requestSubmit();
+          },
         }
-        if (data.status === "failed") {
-          var msg =
-            (data.error && data.error.message) || "Processing failed. Please try another video.";
-          throw new Error(msg);
-        }
-        if (attempt >= POLL_MAX) throw new Error("Timed out — the video is taking too long. Try again later.");
-        setProgress(data.status, data.progress);
-        return new Promise(function (resolve) {
-          setTimeout(function () {
-            resolve(pollUntilReady(videoId, attempt + 1));
-          }, POLL_MS);
-        });
-      });
+      : undefined;
+    showToast((err && err.message) || "Something went wrong.", "error", action);
   }
 
   function onSubmit(e) {
@@ -135,17 +123,19 @@
     api
       .post("/process-video", { youtube_url: url })
       .then(function (data) {
-        if (data.status === "ready") {
-          setProgress("ready", 1);
-          window.location.href = "/watch/" + data.video_id + "/";
-          return;
-        }
-        return pollUntilReady(data.video_id, 0);
+        if (data.status === "ready") return data;
+        return api.pollVideo(data.video_id, {
+          onTick: function (status, progress) {
+            setProgress(status, progress);
+          },
+        });
       })
-      .catch(function (err) {
-        resetProgress();
-        showToast(err.message || "Something went wrong.", "error");
+      .then(function (data) {
+        if (!data) return;
+        setProgress("ready", 1);
+        window.location.href = "/watch/" + data.video_id + "/";
       })
+      .catch(submitError)
       .then(function () {
         setBusy(false);
       });
