@@ -185,11 +185,16 @@ function showToast(message, type, action) {
     success: "border-emerald-500/50 bg-emerald-950/90",
     error: "border-red-500/50 bg-red-950/90",
   };
+  const icons = { info: "ℹ", success: "✓", error: "⚠" };
   const el = document.createElement("div");
   el.className =
     "px-4 py-3 rounded-xl border text-sm shadow-2xl flex items-center gap-3 " +
     (colors[type] || colors.info);
   el.setAttribute("role", type === "error" ? "alert" : "status");
+  const icon = document.createElement("span");
+  icon.setAttribute("aria-hidden", "true");
+  icon.textContent = icons[type] || icons.info;
+  el.appendChild(icon);
   const text = document.createElement("span");
   text.textContent = message;
   el.appendChild(text);
