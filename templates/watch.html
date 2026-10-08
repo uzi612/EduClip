@@ -60,7 +60,8 @@
       <h2 class="text-lg font-bold tracking-tight">Analytics</h2>
       <span class="text-xs font-mono text-gray-500">Chart.js</span>
     </div>
-    <div class="mt-4 rounded-2xl border border-slate-800 bg-slate-900/50 p-4 sm:p-6">
+    <div class="mt-4 grid lg:grid-cols-2 gap-6">
+    <div class="rounded-2xl border border-slate-800 bg-slate-900/50 p-4 sm:p-6">
       <div id="keywordChartWrap" class="hidden h-64">
         <canvas id="keywordChart"></canvas>
       </div>
@@ -77,6 +78,48 @@
           <table id="keywordTable" class="w-full text-sm"></table>
         </div>
       </details>
+    </div>
+    <div class="rounded-2xl border border-slate-800 bg-slate-900/50 p-4 sm:p-6">
+      <div class="flex items-center justify-between gap-2 flex-wrap">
+        <div id="topicLegend" class="flex flex-wrap gap-1.5" aria-label="Chapter share legend"></div>
+        <button id="topicExport" type="button" class="px-3 py-1.5 rounded-lg text-xs border border-slate-800 bg-slate-900/70 text-gray-400 hover:text-gray-100 hover:border-violet-500/50 transition whitespace-nowrap">⤓ PNG</button>
+      </div>
+      <div id="topicChartWrap" class="hidden h-64 mt-2">
+        <canvas id="topicChart"></canvas>
+      </div>
+      <div id="topicPending" class="mt-2">
+        <div class="rounded-2xl border border-dashed border-slate-800 p-10 text-center">
+          <div class="text-3xl">🍩</div>
+          <p class="mt-3 font-semibold">Topics pending…</p>
+          <p class="mt-1 text-sm text-gray-400">The chapter breakdown appears once analytics are ready.</p>
+        </div>
+      </div>
+      <details id="topicTableWrap" class="hidden mt-4 text-sm text-gray-400">
+        <summary class="cursor-pointer hover:text-gray-100 transition">Data table</summary>
+        <div class="mt-2 overflow-x-auto">
+          <table id="topicTable" class="w-full text-sm"></table>
+        </div>
+      </details>
+    </div>
+    <div class="rounded-2xl border border-slate-800 bg-slate-900/50 p-4 sm:p-6 lg:col-span-2">
+      <div id="pacingStats" class="flex flex-wrap gap-1.5" aria-label="Attention stats"></div>
+      <div id="pacingChartWrap" class="hidden h-64 mt-2">
+        <canvas id="pacingChart"></canvas>
+      </div>
+      <div id="pacingPending" class="mt-2">
+        <div class="rounded-2xl border border-dashed border-slate-800 p-10 text-center">
+          <div class="text-3xl">📈</div>
+          <p class="mt-3 font-semibold">Pacing pending…</p>
+          <p class="mt-1 text-sm text-gray-400">The attention curve appears once analytics are ready.</p>
+        </div>
+      </div>
+      <details id="pacingTableWrap" class="hidden mt-4 text-sm text-gray-400">
+        <summary class="cursor-pointer hover:text-gray-100 transition">Data table</summary>
+        <div class="mt-2 overflow-x-auto">
+          <table id="pacingTable" class="w-full text-sm"></table>
+        </div>
+      </details>
+    </div>
     </div>
   </section>
 </div>

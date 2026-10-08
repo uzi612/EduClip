@@ -191,6 +191,9 @@
       return (a.start_sec || 0) - (b.start_sec || 0);
     });
     currentChapter = -1;
+    // Shared read-only for cross-links (charts annotations, legend seeks).
+    window.EDUCLIP = window.EDUCLIP || {};
+    window.EDUCLIP.chapters = chapters;
     var wrap = $("chapterList");
     var count = $("chapterCount");
     if (count) count.textContent = chapters.length ? chapters.length + " chapters" : "";
