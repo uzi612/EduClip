@@ -270,6 +270,9 @@
         }
         renderHeader(data);
         store.setVideo(data); // -> renderChapters via api.js store hook
+        if (typeof window.renderFlashcards === "function") {
+          window.renderFlashcards(data.flashcards, data.video_id);
+        }
         if (data.status === "ready") {
           window.EDUCLIP.youtubeId = data.youtube_id;
           initPlayer();
