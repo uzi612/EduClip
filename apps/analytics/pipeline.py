@@ -62,8 +62,11 @@ def _fallback_flashcards(chapters, full_text):
 
 def degraded_analysis(segments, title, duration_sec):
     """Rule-based fallback when the LLM is unavailable. Never raises."""
+    from apps.analytics.graphs import build_all_graphs
+
     full_text = " ".join(s.get("text", "") for s in (segments or []))
-    chapters = _uniform_chapters(max(int(duration_sec or 0), 30), full_text=full_text)
+    duration = max(int(duration_sec or 0), 30)
+    chapters = _uniform_chapters(duration, full_text=full_text)
     keywords = top_terms(full_text)[:10]
     stats = compute_stats(full_text, [k["term"] for k in keywords])
     return {
@@ -73,6 +76,7 @@ def degraded_analysis(segments, title, duration_sec):
         "flashcards": _fallback_flashcards(chapters, full_text)[:FLASHCARD_TARGET],
         "stats": stats,
         "complexity": complexity_metrics(full_text),
+        "graphs": build_all_graphs(segments, keywords, chapters, duration),
         "degraded": True,
     }
 
@@ -102,6 +106,11 @@ def run_analysis(segments, title, duration_sec, provider=None):
                 ts = 0
             flashcards.append({"front": front, "back": back, "timestamp_sec": ts})
         stats = compute_stats(full_text, [k["term"] for k in keywords])
+        from apps.analytics.graphs import build_all_graphs
+        from apps.analytics.validators import ChartValidator
+
+        graphs = build_all_graphs(segments, keywords, chapters, duration_sec)
+        ChartValidator.validate(graphs)  # redundant by construction; blocks silent drift
         return {
             "summary": str(raw.get("summary", "")),
             "chapters": chapters,
@@ -109,6 +118,7 @@ def run_analysis(segments, title, duration_sec, provider=None):
             "flashcards": flashcards,
             "stats": stats,
             "complexity": complexity_metrics(full_text),
+            "graphs": graphs,
             "degraded": False,
         }
     except Exception:

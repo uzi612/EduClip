@@ -1,8 +1,7 @@
-"""Celery pipeline: transcribe -> analyze -> persist (BACKEND-03).
+"""Celery pipeline: transcribe -> analyze -> persist (BACKEND-03, CHARTS-04).
 
-Queues: transcribe (IO-bound). Analytics *graphs* are intentionally not built
-here — CHARTS-04 adds the Chart.js formatters; flashcards + video fields are
-persisted now. See docs/ARCHITECTURE.md §8 for the status contract.
+Queues: transcribe (IO-bound). Persists video fields + flashcards + the
+Analytics doc (stats + Chart.js graphs). See docs/ARCHITECTURE.md §8.
 """
 import logging
 
@@ -67,6 +66,13 @@ def process_video_task(self, video_id):
         for card in cards:
             Flashcard(video_id=video, front=card["front"], back=card["back"],
                       timestamp_sec=card.get("timestamp_sec", 0)).save()
+        from apps.analytics.models import Analytics
+
+        Analytics.objects(video_id=video).update_one(
+            set__stats=result.get("stats", {}),
+            set__graphs=result.get("graphs", {}),
+            upsert=True,
+        )
         logger.info("process_video_task: %s ready (degraded=%s)", video_id,
                     result.get("degraded", False))
         return {"status": "ready", "video_id": video_id,
