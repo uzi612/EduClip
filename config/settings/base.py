@@ -24,7 +24,9 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    "apps.api_v1.middleware.RequestIdMiddleware",
     "corsheaders.middleware.CorsMiddleware",
+    "apps.api_v1.middleware.RequestLoggingMiddleware",
     "django.middleware.common.CommonMiddleware",
 ]
 
@@ -60,6 +62,7 @@ REST_FRAMEWORK = {
     "DEFAULT_RENDERER_CLASSES": ["rest_framework.renderers.JSONRenderer"],
     "DEFAULT_THROTTLE_CLASSES": ["rest_framework.throttling.AnonRateThrottle"],
     "DEFAULT_THROTTLE_RATES": {"anon": "60/min", "process_video": "10/hour"},
+    "EXCEPTION_HANDLER": "apps.api_v1.exceptions.educlip_exception_handler",
 }
 
 CORS_ALLOW_ALL_ORIGINS = DEBUG
