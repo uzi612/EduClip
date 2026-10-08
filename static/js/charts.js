@@ -51,6 +51,10 @@
     return m + ":" + String(s).padStart(2, "0");
   }
 
+  function getChapters() {
+    return (window.EDUCLIP && window.EDUCLIP.chapters) || [];
+  }
+
   // Highlight the matching chapter sidebar row (best-effort cross-link).
   function highlightChapterRow(index, on) {
     if (typeof document === "undefined" || !document.querySelectorAll) return;
@@ -394,25 +398,196 @@
     return true;
   }
 
+  function pctStr(v) {
+    return Math.round(Number(v) * 1000) / 10 + "%";
+  }
+
+  function renderPacingStats(values, labels, boundaryCount) {
+    var box = $("pacingStats");
+    if (!box) return;
+    if (!values.length) {
+      box.innerHTML = "";
+      return;
+    }
+    var peak = 0;
+    var sum = 0;
+    values.forEach(function (v, i) {
+      var n = Number(v) || 0;
+      sum += n;
+      if (n > Number(values[peak])) peak = i;
+    });
+    var avg = sum / values.length;
+    function chip(k, v) {
+      return (
+        '<span class="px-2.5 py-1 rounded-full border border-slate-800 bg-slate-900/50 text-xs">' +
+        '<span class="text-gray-500">' + esc(k) + " </span>" +
+        '<span class="font-mono text-gray-200">' + esc(v) + "</span></span>"
+      );
+    }
+    box.innerHTML =
+      chip("Peak", pctStr(values[peak]) + " @ " + (labels[peak] || "")) +
+      chip("Average", pctStr(avg)) +
+      chip("Chapters marked", String(boundaryCount));
+  }
+
+  function renderPacingChart(payload) {
+    var canvas = $("pacingChart");
+    if (!canvas || typeof Chart === "undefined") return false;
+    applyDefaults();
+    window.destroyCharts(["pacingChart"]);
+    var data = payload.data || { labels: [], datasets: [] };
+    var labels = data.labels || [];
+    var src = (data.datasets || [])[0] || {};
+    var values = (src.data || []).map(function (v) {
+      var n = Number(v);
+      if (isNaN(n)) return 0;
+      return Math.max(0, Math.min(1, n));
+    });
+    if (!labels.length || !values.length) {
+      showCardState("pacing", "pending");
+      return false;
+    }
+    // Chapter boundaries -> bucket labels for annotations + hover notes.
+    var starts = getChapters()
+      .map(function (c) {
+        return { sec: Math.floor(Number(c.start_sec) || 0), title: c.title || "Untitled" };
+      })
+      .filter(function (s) {
+        return s.sec >= 0 && Math.floor(s.sec / 60) < labels.length;
+      });
+    var startsByBucket = {};
+    starts.forEach(function (s) {
+      var b = Math.floor(s.sec / 60);
+      (startsByBucket[b] = startsByBucket[b] || []).push(s.title);
+    });
+    var boundaryPlugin = {
+      id: "pacingBoundaries",
+      afterDatasetsDraw: function (chart) {
+        var area = chart.chartArea;
+        if (!area || !chart.scales || !chart.scales.x) return;
+        var ctx = chart.ctx;
+        ctx.save();
+        ctx.strokeStyle = "rgba(6,182,212,0.5)";
+        ctx.setLineDash([4, 4]);
+        ctx.lineWidth = 1;
+        starts.forEach(function (s) {
+          var label = labels[Math.floor(s.sec / 60)];
+          var px = chart.scales.x.getPixelForValue(label);
+          if (px < area.left || px > area.right) return;
+          ctx.beginPath();
+          ctx.moveTo(px, area.top);
+          ctx.lineTo(px, area.bottom);
+          ctx.stroke();
+        });
+        ctx.restore();
+      },
+    };
+    var chart = new Chart(canvas, {
+      type: "line",
+      data: {
+        labels: labels,
+        datasets: [
+          {
+            label: src.label || "Attention score",
+            data: values,
+            borderColor: VIOLET,
+            backgroundColor: "rgba(139,92,246,0.2)",
+            fill: src.fill !== undefined ? src.fill : true,
+            tension: 0.4,
+            pointRadius: 2,
+            pointHoverRadius: 5,
+            pointBackgroundColor: VIOLET,
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        onClick: function (evt, elements) {
+          var i = elements && elements.length ? elements[0].index : null;
+          if (i === null || i === undefined) return;
+          var sec = labelToSec(labels[i]);
+          if (typeof window.seekToTimestamp === "function") {
+            window.seekToTimestamp(sec !== null ? sec : i * 60);
+          }
+        },
+        onHover: function (evt, elements) {
+          if (evt && evt.native && evt.native.target) {
+            evt.native.target.style.cursor = elements && elements.length ? "pointer" : "default";
+          }
+        },
+        plugins: {
+          legend: { display: false },
+          title: { display: true, text: "Attention curve" },
+          tooltip: {
+            callbacks: {
+              title: function (items) {
+                return items && items.length ? items[0].label + " min" : "";
+              },
+              label: function (ctx) {
+                return " Attention " + pctStr(ctx.parsed.y);
+              },
+              afterBody: function (items) {
+                if (!items || !items.length) return "";
+                var names = startsByBucket[items[0].dataIndex] || [];
+                return names.length ? "▶ " + names.join(", ") : "";
+              },
+            },
+          },
+        },
+        scales: {
+          x: { title: { display: true, text: "Video time (60s buckets)" } },
+          y: { min: 0, max: 1, ticks: { callback: function (v) { return Math.round(v * 100) + "%"; } }, title: { display: true, text: "Attention" } },
+        },
+      },
+      plugins: [boundaryPlugin],
+    });
+    live.pacingChart = chart;
+    canvas.setAttribute("role", "img");
+    var peak = 0;
+    values.forEach(function (v, i) {
+      if (v > values[peak]) peak = i;
+    });
+    canvas.setAttribute(
+      "aria-label",
+      "Line chart of attention over time. Peak " + pctStr(values[peak]) + " at " + labels[peak] + "."
+    );
+    renderPacingStats(values, labels, starts.length);
+    renderTableInto(
+      "pacingTable",
+      "pacingTableWrap",
+      ["Time", "Attention"],
+      labels.map(function (label, i) {
+        return [label, pctStr(values[i] !== undefined ? values[i] : 0)];
+      })
+    );
+    showCardState("pacing", "ready");
+    return true;
+  }
+
   window.renderCharts = function (graphs, videoId) {
     var kw = graphs && graphs.keyword_density;
     var tp = graphs && graphs.chapter_duration;
+    var pc = graphs && graphs.engagement_curve;
     var renderBoth = function () {
       if (kw && kw.data && !renderKeywordChart(kw)) showState("pending");
       if (tp && tp.data && !renderTopicChart(tp)) showCardState("topic", "pending");
+      if (pc && pc.data && !renderPacingChart(pc)) showCardState("pacing", "pending");
     };
-    if ((kw && kw.data) || (tp && tp.data)) {
-      whenVisible($("keywordChartWrap") || $("topicChartWrap") || $("keywordChart"), renderBoth);
+    if ((kw && kw.data) || (tp && tp.data) || (pc && pc.data)) {
+      whenVisible($("keywordChartWrap") || $("topicChartWrap") || $("pacingChartWrap") || $("keywordChart"), renderBoth);
       return;
     }
     if (!videoId || typeof api === "undefined") {
       showState("pending");
       showCardState("topic", "pending");
+      showCardState("pacing", "pending");
       return;
     }
     // Payload had no graphs — try the dedicated endpoint (backend order may vary).
     showState("loading");
     showCardState("topic", "loading");
+    showCardState("pacing", "loading");
     api
       .get("/video/" + encodeURIComponent(videoId) + "/analytics")
       .then(function (data) {
@@ -422,11 +597,14 @@
         else showState("pending");
         if (g.chapter_duration && g.chapter_duration.data) drew = renderTopicChart(g.chapter_duration) || drew;
         else showCardState("topic", "pending");
+        if (g.engagement_curve && g.engagement_curve.data) drew = renderPacingChart(g.engagement_curve) || drew;
+        else showCardState("pacing", "pending");
         return drew;
       })
       .catch(function () {
         showState("pending");
         showCardState("topic", "pending");
+        showCardState("pacing", "pending");
       });
   };
 })();
