@@ -7,7 +7,7 @@ pymongo>=4.8
 mongoengine>=0.29
 youtube-transcript-api>=1.0
 openai>=1.0
-# Optional: google-generativeai (Gemini adapter via LLM_PROVIDER=gemini)
+google-generativeai>=0.5  # default provider (gemini-1.5-flash)
 # Optional fallback tiers (BACKEND-01 T2/T3):
 # yt-dlp
 # faster-whisper

@@ -142,7 +142,7 @@ def test_llm_backoff_is_exponential_with_jitter():
         "random.uniform", return_value=0.0), patch(
         "services.llm_client.time.sleep", side_effect=lambda s: sleeps.append(s)):
         try:
-            llm_client.analyze_video(segs, "T", use_cache=False)
+            llm_client.analyze_video(segs, "T", provider="openai", use_cache=False)
         except LLMError:
             pass
         else:

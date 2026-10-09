@@ -1,7 +1,10 @@
 """Unified LLM client (BACKEND-02): transcript -> structured insights.
 
-Provider-agnostic: OpenAI `gpt-4o-mini` (JSON mode) primary, Gemini adapter
-behind the LLM_PROVIDER setting. All SDK imports are lazy so
+Provider-agnostic with Gemini as the default: LLM_PROVIDER=gemini uses
+`gemini-1.5-flash` (JSON mode); LLM_PROVIDER=openai opts back into
+`gpt-4o-mini`. Both providers share one SYSTEM_PROMPT and one validated
+output schema ({summary, chapters, keywords, flashcards}), so downstream
+code never branches on provider. All SDK imports are lazy so
 `manage.py check` works without optional AI dependencies.
 
 See docs/ARCHITECTURE.md §6.
@@ -12,6 +15,7 @@ import random
 import time
 
 OPENAI_MODEL = "gpt-4o-mini"
+GEMINI_MODEL = "gemini-1.5-flash"
 OPENAI_TIMEOUT_SEC = 60
 MAX_TRANSCRIPT_SEGMENTS = 800
 MAX_RETRIES = 2
@@ -62,14 +66,15 @@ def cache_key(full_text):
 
 
 def _provider_name(explicit=None):
+    """Resolve the LLM provider: explicit arg > LLM_PROVIDER setting > gemini."""
     if explicit:
         return explicit
     try:
         from django.conf import settings
 
-        return getattr(settings, "LLM_PROVIDER", "openai")
+        return getattr(settings, "LLM_PROVIDER", "") or "gemini"
     except Exception:
-        return "openai"
+        return "gemini"
 
 
 def _call_openai(transcript, title):
@@ -81,10 +86,17 @@ def _call_openai(transcript, title):
     try:
         from django.conf import settings
 
-        api_key = getattr(settings, "OPENAI_API_KEY", "")
+        api_key = getattr(settings, "OPENAI_API_KEY", "") or ""
     except Exception:
         api_key = ""
-    client = OpenAI(api_key=api_key or None, timeout=OPENAI_TIMEOUT_SEC)
+    if not api_key:
+        raise LLMError(
+            "OPENAI_API_KEY is not configured. Set it in .env (see .env.example) "
+            "or switch to the default provider with LLM_PROVIDER=gemini plus "
+            "GEMINI_API_KEY.",
+            retryable=False, provider="openai",
+        )
+    client = OpenAI(api_key=api_key, timeout=OPENAI_TIMEOUT_SEC)
     try:
         resp = client.chat.completions.create(
             model=OPENAI_MODEL,
@@ -113,13 +125,19 @@ def _call_gemini(transcript, title):
     try:
         from django.conf import settings
 
-        api_key = getattr(settings, "GEMINI_API_KEY", "")
+        api_key = getattr(settings, "GEMINI_API_KEY", "") or ""
     except Exception:
         api_key = ""
+    if not api_key:
+        raise LLMError(
+            "GEMINI_API_KEY is not configured. Set it in .env (see .env.example) "
+            "to generate video insights with the default gemini provider.",
+            retryable=False, provider="gemini",
+        )
     try:
-        genai.configure(api_key=api_key or None)
+        genai.configure(api_key=api_key)
         model = genai.GenerativeModel(
-            "gemini-1.5-flash",
+            GEMINI_MODEL,
             system_instruction=SYSTEM_PROMPT,
             generation_config={"response_mime_type": "application/json",
                                "temperature": 0.3, "max_output_tokens": 3000},

@@ -4,9 +4,15 @@ Run: python apps/analytics/tests/test_llm_pipeline.py (needs repo root on PYTHON
 OpenAI is stubbed via sys.modules — no network, no `openai` package needed.
 """
 import json
+import os
 import sys
 import types
 from unittest.mock import patch
+
+import django
+
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings.base")
+django.setup()
 
 CALLS = {"n": 0}
 CANNED = {
@@ -90,13 +96,16 @@ def test_rescore_keywords():
 
 
 def test_analyze_video_mocked_and_cached():
+    from django.test.utils import override_settings
+
     llm_client.clear_cache()
     CALLS["n"] = 0
-    first = llm_client.analyze_video(SEGS, "Photosynthesis")
+    with override_settings(OPENAI_API_KEY="test-key"):
+        first = llm_client.analyze_video(SEGS, "Photosynthesis", provider="openai")
     assert first["summary"].startswith("Plants") and first["_meta"]["cached"] is False
     assert CALLS["kwargs"]["temperature"] == 0.3
     assert CALLS["kwargs"]["response_format"] == {"type": "json_object"}
-    second = llm_client.analyze_video(SEGS, "Photosynthesis")
+    second = llm_client.analyze_video(SEGS, "Photosynthesis", provider="openai")
     assert second["_meta"]["cached"] is True and CALLS["n"] == 1
 
 
@@ -108,15 +117,18 @@ def test_analyze_video_invalid_json_raises():
         LLMError("bad json", retryable=False, provider="openai")
     ]):
         try:
-            llm_client.analyze_video(SEGS, "T", use_cache=False)
+            llm_client.analyze_video(SEGS, "T", provider="openai", use_cache=False)
         except LLMError:
             return
     raise AssertionError("expected LLMError on invalid payload")
 
 
 def test_run_analysis_full_path():
+    from django.test.utils import override_settings
+
     llm_client.clear_cache()
-    out = pipeline.run_analysis(SEGS, "Photosynthesis", 842)
+    with override_settings(OPENAI_API_KEY="test-key"):
+        out = pipeline.run_analysis(SEGS, "Photosynthesis", 842, provider="openai")
     assert out["degraded"] is False
     assert out["chapters"][-1]["end_sec"] == 842
     assert len(out["flashcards"]) == 2  # empty-front card dropped

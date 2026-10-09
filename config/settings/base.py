@@ -73,5 +73,5 @@ MONGODB_DB_NAME = os.getenv("MONGODB_DB_NAME", "educlip")
 CELERY_BROKER_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
 CELERY_RESULT_BACKEND = os.getenv("CELERY_RESULT_BACKEND", "redis://localhost:6379/1")
 YOUTUBE_API_KEY = os.getenv("YOUTUBE_API_KEY", "")
-LLM_PROVIDER = os.getenv("LLM_PROVIDER", "openai")
+LLM_PROVIDER = os.getenv("LLM_PROVIDER", "gemini")
 EDUCLIP_VERSION = "1.0.0"
