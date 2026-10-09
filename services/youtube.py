@@ -282,25 +282,28 @@ def get_video_metadata(youtube_id):
 
 def _metadata_without_key(youtube_id, meta):
     """Keyless metadata: yt-dlp full extract, else oEmbed title/author."""
+    yt_dlp_error = None
     try:
         import yt_dlp
-
-        with yt_dlp.YoutubeDL({"quiet": True, "no_warnings": True,
-                                "socket_timeout": 20}) as ydl:
-            info = ydl.extract_info(
-                f"https://www.youtube.com/watch?v={youtube_id}", download=False) or {}
-        meta.update({
-            "title": info.get("title", "") or "",
-            "channel": info.get("channel") or info.get("uploader", "") or "",
-            "thumbnail": info.get("thumbnail", "") or meta["thumbnail"],
-            "duration_sec": int(info.get("duration") or 0),
-        })
-        if meta["duration_sec"] > 0:
-            return meta
     except ImportError:
-        pass
-    except Exception:
-        pass
+        yt_dlp_error = "yt-dlp is not installed."
+    else:
+        try:
+            with yt_dlp.YoutubeDL({"quiet": True, "no_warnings": True,
+                                    "socket_timeout": 20}) as ydl:
+                info = ydl.extract_info(
+                    f"https://www.youtube.com/watch?v={youtube_id}", download=False) or {}
+            meta.update({
+                "title": info.get("title", "") or "",
+                "channel": info.get("channel") or info.get("uploader", "") or "",
+                "thumbnail": info.get("thumbnail", "") or meta["thumbnail"],
+                "duration_sec": int(info.get("duration") or 0),
+            })
+            if meta["duration_sec"] > 0:
+                return meta
+            yt_dlp_error = "yt-dlp returned no duration."
+        except Exception as exc:  # e.g. YouTube bot-check on this IP: transient
+            yt_dlp_error = str(exc)[:200]
     try:  # last resort: title/author only (duration stays unknown)
         import json
         import urllib.request
@@ -314,9 +317,13 @@ def _metadata_without_key(youtube_id, meta):
     except Exception:
         pass
     if meta["duration_sec"] <= 0:
+        hint = ("install yt-dlp or set YOUTUBE_API_KEY"
+                if yt_dlp_error == "yt-dlp is not installed."
+                else f"page extract failed ({yt_dlp_error}); retry later or set "
+                     "YOUTUBE_API_KEY")
         raise TranscriptUnavailableError(
-            f"Could not determine duration for video {youtube_id} without "
-            "YOUTUBE_API_KEY (install yt-dlp or set the key).",
-            retryable=False, source="metadata",
+            f"Could not determine duration for video {youtube_id}: {hint}.",
+            retryable=yt_dlp_error != "yt-dlp is not installed.",
+            source="metadata",
         )
     return meta
