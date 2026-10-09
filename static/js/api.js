@@ -22,6 +22,21 @@ const api = {
   pollIntervalMs: 3000,
   pollTimeoutMs: 5 * 60 * 1000, // 5-minute polling timeout
 
+  // UUID v4 without assuming crypto.randomUUID (absent on non-secure contexts).
+  newIdempotencyKey() {
+    try {
+      if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+        return crypto.randomUUID();
+      }
+    } catch (_) {
+      /* fall through to Math.random fallback */
+    }
+    return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
+      const r = (Math.random() * 16) | 0;
+      return (c === "x" ? r : (r & 0x3) | 0x8).toString(16);
+    });
+  },
+
   sleep(ms) {
     return new Promise(function (resolve) {
       setTimeout(resolve, ms);
@@ -66,7 +81,7 @@ const api = {
     }, this.timeoutMs);
     const headers = {};
     if (opts.body !== undefined) headers["Content-Type"] = "application/json";
-    if (opts.idempotent) headers["Idempotency-Key"] = crypto.randomUUID();
+    if (opts.idempotent) headers["Idempotency-Key"] = this.newIdempotencyKey();
     let res;
     try {
       res = await fetch(this.base + path, {

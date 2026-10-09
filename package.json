@@ -5,7 +5,8 @@
   "description": "EduClip AI — Tailwind CSS build pipeline (SETUP-02)",
   "scripts": {
     "build:css": "tailwindcss -i ./static/css/base.css -o ./static/css/output.css --minify",
-    "watch:css": "tailwindcss -i ./static/css/base.css -o ./static/css/output.css --watch"
+    "watch:css": "tailwindcss -i ./static/css/base.css -o ./static/css/output.css --watch",
+    "test:js": "node tests/js/test_api_client.js && node tests/js/test_modal.js && node tests/js/test_charts.js"
   },
   "devDependencies": {
     "@tailwindcss/line-clamp": "^0.4.4",

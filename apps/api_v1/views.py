@@ -6,6 +6,7 @@ from mongoengine.errors import ValidationError as MongoValidationError
 from rest_framework.decorators import api_view, throttle_classes
 from rest_framework.response import Response
 
+from apps.api_v1.exceptions import request_id_of
 from apps.api_v1.serializers import ProcessVideoSerializer
 from apps.api_v1.throttles import ProcessVideoThrottle
 
@@ -41,30 +42,38 @@ def process_video(request):
     try:
         ensure_mongoengine()
     except RuntimeError as exc:
+        rid = request_id_of(request)
         return Response({"error": {"code": "SERVICE_UNAVAILABLE", "message": str(exc),
+                                    "details": {}, "request_id": rid,
                                     "retryable": True}}, status=503)
 
     serializer = ProcessVideoSerializer(data=request.data)
     if not serializer.is_valid():
         errors = serializer.errors
         code = "INVALID_URL" if set(errors) == {"youtube_url"} else "VALIDATION_ERROR"
+        rid = request_id_of(request)
         return Response({"error": {"code": code, "message": "; ".join(
             f"{f}: {', '.join(map(str, m))}" for f, m in errors.items()),
-            "details": {"fields": errors}}}, status=400)
+            "details": {"fields": errors}, "request_id": rid,
+            "retryable": False}}, status=400)
 
     youtube_id = serializer.youtube_id
     idempotency_key = request.headers.get("Idempotency-Key", "")
     try:
         metadata = get_video_metadata(youtube_id)
     except TranscriptUnavailableError as exc:
+        rid = request_id_of(request)
         return Response({"error": {"code": "VIDEO_UNAVAILABLE", "message": str(exc),
+                                    "details": {}, "request_id": rid,
                                     "retryable": exc.retryable}}, status=422)
     try:
         video, created = get_or_create_video(
             youtube_id, metadata, idempotency_key=idempotency_key)
     except MongoValidationError as exc:
+        rid = request_id_of(request)
         return Response({"error": {"code": "VIDEO_UNAVAILABLE",
                                     "message": f"Video metadata incomplete: {exc}",
+                                    "details": {}, "request_id": rid,
                                     "retryable": False}}, status=422)
 
     video_id = str(video.id)

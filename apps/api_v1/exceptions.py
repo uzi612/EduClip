@@ -27,6 +27,11 @@ def _request_id(request):
         return "unknown"
 
 
+def request_id_of(request):
+    """Public accessor so views build envelopes with the same correlation id."""
+    return _request_id(request)
+
+
 def _envelope(code, message, status_code, request, details=None, retryable=False):
     return Response(
         {"error": {"code": code, "message": message, "details": details or {},
@@ -80,4 +85,4 @@ def not_found_json(request, exception=None):
     return response
 
 
-__all__ = ["educlip_exception_handler", "not_found_json"]
+__all__ = ["educlip_exception_handler", "not_found_json", "request_id_of"]
