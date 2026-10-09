@@ -161,11 +161,50 @@ def fetch_transcript(youtube_id, languages=PREFERRED_LANGUAGES):
     return segments, "youtube_captions"
 
 
+# Must stay in sync with TranscriptSegment.text max_length in apps/videos/models.py.
+MAX_SEGMENT_CHARS = 490
+
+
+def _split_long_segment(seg):
+    """Split text over MAX_SEGMENT_CHARS at sentence/word boundaries.
+
+    Real caption tracks (e.g. auto-generated) can pack minutes of speech into
+    one cue; the document cap would otherwise fail the whole video. Duration
+    is distributed proportionally to chunk length. Never raises.
+    """
+    text = seg["text"]
+    if len(text) <= MAX_SEGMENT_CHARS:
+        return [seg]
+    sentences, current = [], ""
+    for piece in re.split(r"(?<=[.!?])\s+", text):
+        if len(current) + len(piece) + 1 <= MAX_SEGMENT_CHARS:
+            current = f"{current} {piece}".strip()
+        else:
+            if current:
+                sentences.append(current)
+            while len(piece) > MAX_SEGMENT_CHARS:  # single run-on sentence
+                sentences.append(piece[:MAX_SEGMENT_CHARS].rsplit(" ", 1)[0])
+                piece = piece[len(sentences[-1]):].strip()
+            current = piece
+    if current:
+        sentences.append(current)
+    total = sum(len(s) for s in sentences) or 1
+    out, offset = [], 0.0
+    for sentence in sentences:
+        share = len(sentence) / total
+        chunk_dur = max(0.5, seg["duration"] * share)
+        out.append({"start": seg["start"] + offset, "duration": chunk_dur,
+                    "text": sentence})
+        offset += chunk_dur
+    return out
+
+
 def normalize_segments(segments, merge_gap=1.2, max_chars=MAX_FULL_TEXT_CHARS):
     """Clean raw segments. Returns (segments, full_text).
 
     - Drops fully-bracketed markers (`[Music]`, `[Applause]`) and empties.
     - Merges segments separated by less than `merge_gap` seconds.
+    - Splits cues longer than MAX_SEGMENT_CHARS (document cap) without loss.
     - Caps joined text at `max_chars` with a truncation marker.
     """
     cleaned = []
@@ -186,17 +225,22 @@ def normalize_segments(segments, merge_gap=1.2, max_chars=MAX_FULL_TEXT_CHARS):
             prev["text"] = f"{prev['text']} {seg['text']}"
         else:
             merged.append(dict(seg))
-    full_text = " ".join(s["text"] for s in merged)
+    final = []
+    for seg in merged:
+        final.extend(_split_long_segment(seg))
+    full_text = " ".join(s["text"] for s in final)
     if len(full_text) > max_chars:
         full_text = full_text[:max_chars] + TRUNCATION_MARKER
-    return merged, full_text
+    return final, full_text
 
 
 def get_video_metadata(youtube_id):
-    """Fetch title/channel/duration via YouTube Data API v3 when configured.
+    """Fetch title/channel/duration/thumbnail with a keyless fallback chain.
 
-    Without YOUTUBE_API_KEY returns thumbnail-only metadata so ingestion can
-    still proceed (transcript-first prototype mode).
+    Tier 1: YouTube Data API v3 (needs YOUTUBE_API_KEY).
+    Tier 2: yt-dlp page extract (no key; title, channel, duration, thumbnail).
+    Tier 3: oEmbed (no key; title + author only — duration unknown).
+    Raises TranscriptUnavailableError when no tier yields a usable duration.
     """
     from django.conf import settings
 
@@ -209,7 +253,7 @@ def get_video_metadata(youtube_id):
     }
     api_key = getattr(settings, "YOUTUBE_API_KEY", "") or ""
     if not api_key:
-        return meta
+        return _metadata_without_key(youtube_id, meta)
     try:
         from googleapiclient.discovery import build
 
@@ -234,3 +278,52 @@ def get_video_metadata(youtube_id):
             f"Metadata lookup failed for video {youtube_id}: {exc}",
             retryable=True, source="metadata",
         ) from exc
+
+
+def _metadata_without_key(youtube_id, meta):
+    """Keyless metadata: yt-dlp full extract, else oEmbed title/author."""
+    yt_dlp_error = None
+    try:
+        import yt_dlp
+    except ImportError:
+        yt_dlp_error = "yt-dlp is not installed."
+    else:
+        try:
+            with yt_dlp.YoutubeDL({"quiet": True, "no_warnings": True,
+                                    "socket_timeout": 20}) as ydl:
+                info = ydl.extract_info(
+                    f"https://www.youtube.com/watch?v={youtube_id}", download=False) or {}
+            meta.update({
+                "title": info.get("title", "") or "",
+                "channel": info.get("channel") or info.get("uploader", "") or "",
+                "thumbnail": info.get("thumbnail", "") or meta["thumbnail"],
+                "duration_sec": int(info.get("duration") or 0),
+            })
+            if meta["duration_sec"] > 0:
+                return meta
+            yt_dlp_error = "yt-dlp returned no duration."
+        except Exception as exc:  # e.g. YouTube bot-check on this IP: transient
+            yt_dlp_error = str(exc)[:200]
+    try:  # last resort: title/author only (duration stays unknown)
+        import json
+        import urllib.request
+
+        url = ("https://www.youtube.com/oembed?url="
+               f"https://www.youtube.com/watch?v={youtube_id}&format=json")
+        with urllib.request.urlopen(url, timeout=15) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+        meta.update({"title": data.get("title", meta["title"]),
+                     "channel": data.get("author_name", meta["channel"])})
+    except Exception:
+        pass
+    if meta["duration_sec"] <= 0:
+        hint = ("install yt-dlp or set YOUTUBE_API_KEY"
+                if yt_dlp_error == "yt-dlp is not installed."
+                else f"page extract failed ({yt_dlp_error}); retry later or set "
+                     "YOUTUBE_API_KEY")
+        raise TranscriptUnavailableError(
+            f"Could not determine duration for video {youtube_id}: {hint}.",
+            retryable=yt_dlp_error != "yt-dlp is not installed.",
+            source="metadata",
+        )
+    return meta

@@ -20,8 +20,15 @@ FLASHCARD_TARGET = 10
 CHAPTER_UNIFORM_SEC = 300
 
 
+# Summary safety cap: sentence splitting is script-dependent (Latin .!? vs
+# Devanagari ।), so a transcript with no recognized terminators must never
+# become a multi-KB "summary".
+MAX_SUMMARY_CHARS = 1200
+
+
 def _extractive_summary(full_text, sentences_per_quartile=3):
-    sentences = [s.strip() for s in re.split(r"(?<=[.!?])\s+", full_text or "") if s.strip()]
+    sentences = [s.strip() for s in re.split(r"(?<=[.!?।])\s+", full_text or "")
+                 if s.strip()]
     if not sentences:
         return ""
     n = len(sentences)
@@ -29,7 +36,10 @@ def _extractive_summary(full_text, sentences_per_quartile=3):
     for q in range(4):
         start = (n * q) // 4
         picked.extend(sentences[start : start + sentences_per_quartile])
-    return " ".join(picked[: sentences_per_quartile * 4])
+    summary = " ".join(picked[: sentences_per_quartile * 4])
+    if len(summary) > MAX_SUMMARY_CHARS:
+        summary = summary[:MAX_SUMMARY_CHARS].rsplit(" ", 1)[0] + "…"
+    return summary
 
 
 def _uniform_chapters(duration, words_per_sec=2.5, full_text=""):

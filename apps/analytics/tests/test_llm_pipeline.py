@@ -143,6 +143,20 @@ def test_stats_and_complexity():
     assert 0 < c["type_token_ratio"] <= 1 and c["avg_words_per_sentence"] > 0
 
 
+def test_unicode_transcript_metrics():
+    # Regression: Hindi/Devanagari transcript (video IecCQPX-QsI) collapsed to
+    # one bogus keyword and a full-text "summary" before Unicode-aware handling.
+    from apps.analytics import pipeline as pipeline_mod
+    from services.text_metrics import tokenize, top_terms
+
+    text = " ".join(f"पोर्टफोलियो डेटा विश्लेषण भाग {i}।" for i in range(30))
+    assert len(tokenize(text)) > 50
+    terms = top_terms(text)
+    assert terms and terms[0]["count"] >= 10
+    summary = pipeline_mod._extractive_summary(text)
+    assert 0 < len(summary) <= pipeline_mod.MAX_SUMMARY_CHARS
+
+
 if __name__ == "__main__":
     for name, fn in sorted([(k, v) for k, v in globals().items() if k.startswith("test_")]):
         fn()
