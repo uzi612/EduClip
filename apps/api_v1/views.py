@@ -60,6 +60,20 @@ def process_video(request):
             "details": {"fields": errors}, "request_id": rid,
             "retryable": False}}, status=400)
 
+    # Pre-flight: fail fast when no worker could ever pick this up. Without
+    # it a dead broker accepts the POST and strands the video at 5% forever.
+    # (Eager/dev mode runs inline, so no broker is needed there.)
+    if not getattr(settings, "CELERY_TASK_ALWAYS_EAGER", False):
+        broker_ok, _ = _check_redis()
+        if not broker_ok:
+            rid = request_id_of(request)
+            logger.warning("worker pre-flight failed: request_id=%s", rid)
+            return Response({"error": {
+                "code": "WORKER_UNAVAILABLE",
+                "message": "Video workers are unavailable (message broker unreachable). "
+                           "Start Redis and a Celery worker, then retry.",
+                "details": {}, "request_id": rid, "retryable": True}}, status=503)
+
     youtube_id = serializer.youtube_id
     idempotency_key = request.headers.get("Idempotency-Key", "")
     try:

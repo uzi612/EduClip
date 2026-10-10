@@ -72,10 +72,15 @@ def _post(client, url=URL, key="key-1"):
                        HTTP_IDEMPOTENCY_KEY=key)
 
 
+def _healthy_broker():
+    """Pre-flight patch: tests assume a reachable worker broker."""
+    return patch("apps.api_v1.views._check_redis", return_value=(True, 1))
+
+
 def test_submit_queues_job():
     _clean()
     with patch("services.youtube.get_video_metadata", return_value=dict(META)), patch(
-        "apps.videos.tasks.process_video_task") as task:
+        "apps.videos.tasks.process_video_task") as task, _healthy_broker():
         task.delay.return_value = MagicMock(id="task-1")
         r = _post(_client())
     assert r.status_code == 202, r.content
@@ -89,7 +94,7 @@ def test_submit_queues_job():
 def test_duplicate_does_not_requeue():
     _clean()
     with patch("services.youtube.get_video_metadata", return_value=dict(META)), patch(
-        "apps.videos.tasks.process_video_task") as task:
+        "apps.videos.tasks.process_video_task") as task, _healthy_broker():
         task.delay.return_value = MagicMock(id="task-1")
         first = _post(_client()).json()
         second = _post(_client(), key="key-2").json()
@@ -100,7 +105,7 @@ def test_duplicate_does_not_requeue():
 def test_ready_dedupe_returns_200():
     _clean()
     with patch("services.youtube.get_video_metadata", return_value=dict(META)), patch(
-        "apps.videos.tasks.process_video_task") as task:
+        "apps.videos.tasks.process_video_task") as task, _healthy_broker():
         task.delay.return_value = MagicMock(id="task-1")
         vid = _post(_client()).json()["video_id"]
         Video.objects(id=vid).update_one(set__status="ready", set__progress=1.0)
@@ -118,7 +123,8 @@ def test_invalid_url_returns_400():
 def test_unavailable_video_returns_422():
     _clean()
     with patch("services.youtube.get_video_metadata",
-               side_effect=TranscriptUnavailableError("gone", retryable=False)):
+               side_effect=TranscriptUnavailableError("gone", retryable=False)), \
+            _healthy_broker():
         r = _post(_client())
     assert r.status_code == 422
     assert r.json()["error"]["code"] == "VIDEO_UNAVAILABLE"
@@ -137,7 +143,7 @@ def test_throttle_kicks_in():
     with patch.object(ProcessVideoThrottle, "THROTTLE_RATES",
                        {"process_video": "2/min"}), patch(
         "services.youtube.get_video_metadata", return_value=dict(META)), patch(
-            "apps.videos.tasks.process_video_task") as task:
+            "apps.videos.tasks.process_video_task") as task, _healthy_broker():
         task.delay.return_value = MagicMock(id="t")
         codes = [_client().post(
             API, {"youtube_url": f"https://youtu.be/{i}"}, format="json"

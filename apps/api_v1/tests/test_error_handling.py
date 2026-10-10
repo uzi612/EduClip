@@ -68,6 +68,7 @@ def test_throttle_returns_rate_limited_envelope():
         ids = ["dQw4w9WgXcQ", "9bZkp7q19f0", "jNQXAC9IVRw"]
         with patch.object(ProcessVideoThrottle, "THROTTLE_RATES",
                           {"process_video": "2/min"}), patch(
+            "apps.api_v1.views._check_redis", return_value=(True, 1)), patch(
             "services.youtube.get_video_metadata", return_value=dict(meta)), patch(
                 "apps.videos.tasks.process_video_task") as task:
             task.delay.return_value = MagicMock(id="t")

@@ -88,7 +88,8 @@ def test_broker_down_returns_503_not_hang():
     Video.objects.delete()
     meta = {"title": "T", "channel": "C",
             "thumbnail": "https://i.ytimg.com/vi/x/hqdefault.jpg", "duration_sec": 600}
-    with patch("services.youtube.get_video_metadata", return_value=dict(meta)), patch(
+    with patch("apps.api_v1.views._check_redis", return_value=(True, 1)), patch(
+        "services.youtube.get_video_metadata", return_value=dict(meta)), patch(
         "apps.videos.tasks.process_video_task") as task:
         task.delay.side_effect = Exception("connection refused: redis")
         r = APIClient(HTTP_HOST="testserver").post(
@@ -99,6 +100,25 @@ def test_broker_down_returns_503_not_hang():
     assert body["error"]["code"] == "WORKER_UNAVAILABLE"
     assert body["error"]["retryable"] is True
     assert Video.objects(youtube_id=VID).first().status == "failed"
+
+
+def test_dead_broker_fails_fast_with_no_orphan_row():
+    # The 5%-forever hang: pre-flight must reject before any DB record exists.
+    import time
+
+    from apps.videos.models import Video
+
+    Video.objects.delete()
+    with patch("apps.api_v1.views._check_redis", return_value=(False, None)):
+        started = time.perf_counter()
+        r = APIClient(HTTP_HOST="testserver").post(
+            "/api/v1/process-video", {"youtube_url": f"https://youtu.be/{VID}"},
+            format="json")
+        elapsed = time.perf_counter() - started
+    assert r.status_code == 503, r.content
+    assert r.json()["error"]["code"] == "WORKER_UNAVAILABLE"
+    assert elapsed < 10, f"pre-flight must be fast ({elapsed:.1f}s)"
+    assert Video.objects(youtube_id=VID).first() is None
 
 
 def test_gemini_uses_request_timeout():
