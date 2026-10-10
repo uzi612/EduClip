@@ -58,10 +58,18 @@ TEMPLATES = [
 ]
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
+# Throttling: relaxed under DEBUG so local review/testing never trips limits;
+# strict in production (DEPLOY-02). Per-scope classes live in
+# apps/api_v1/throttles.py and read these rates at request time.
+if DEBUG:
+    THROTTLE_RATES = {"anon": "100/min", "process_video": "100/min"}
+else:
+    THROTTLE_RATES = {"anon": "60/min", "process_video": "10/hour"}
+
 REST_FRAMEWORK = {
     "DEFAULT_RENDERER_CLASSES": ["rest_framework.renderers.JSONRenderer"],
     "DEFAULT_THROTTLE_CLASSES": ["rest_framework.throttling.AnonRateThrottle"],
-    "DEFAULT_THROTTLE_RATES": {"anon": "60/min", "process_video": "10/hour"},
+    "DEFAULT_THROTTLE_RATES": THROTTLE_RATES,
     "EXCEPTION_HANDLER": "apps.api_v1.exceptions.educlip_exception_handler",
 }
 

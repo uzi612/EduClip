@@ -51,7 +51,11 @@ def educlip_exception_handler(exc, context):
     if isinstance(exc, Throttled):
         wait = getattr(exc, "wait", None)
         wait_sec = int(wait) if wait else None
-        resp = _envelope("RATE_LIMITED", "Request was throttled.", 429, request,
+        if wait_sec is not None:
+            message = f"Too many requests. Try again in {wait_sec} second(s)."
+        else:
+            message = "Too many requests. Slow down and try again shortly."
+        resp = _envelope("RATE_LIMITED", message, 429, request,
                          {"retry_after_sec": wait_sec}, retryable=True)
         if wait_sec is not None:
             resp["Retry-After"] = str(wait_sec)

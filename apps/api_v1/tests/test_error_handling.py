@@ -100,7 +100,19 @@ def test_handler_throttled():
     assert resp.status_code == 429
     assert resp.data["error"]["code"] == "RATE_LIMITED"
     assert resp.data["error"]["details"]["retry_after_sec"] == 30
+    assert "30" in resp.data["error"]["message"]  # seconds remaining in plain words
     assert resp["Retry-After"] == "30"
+
+
+def test_throttle_rates_follow_debug_flag():
+    # Relaxed under DEBUG for local review; strict in production (DEPLOY-02).
+    from django.conf import settings as dj_settings
+
+    rates = dj_settings.REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]
+    if dj_settings.DEBUG:
+        assert rates == {"anon": "100/min", "process_video": "100/min"}, rates
+    else:
+        assert rates == {"anon": "60/min", "process_video": "10/hour"}, rates
 
 
 def test_handler_uncaught_is_500_with_request_id():
@@ -142,7 +154,10 @@ def test_llm_backoff_is_exponential_with_jitter():
         "random.uniform", return_value=0.0), patch(
         "services.llm_client.time.sleep", side_effect=lambda s: sleeps.append(s)):
         try:
-            llm_client.analyze_video(segs, "T", use_cache=False)
+            # Pin the OpenAI route: ambient LLM_PROVIDER may be gemini, whose
+            # real client performs its own zero-second HTTP retries that would
+            # pollute the recorded sleep schedule.
+            llm_client.analyze_video(segs, "T", provider="openai", use_cache=False)
         except LLMError:
             pass
         else:
