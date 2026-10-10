@@ -121,6 +121,47 @@ def test_dead_broker_fails_fast_with_no_orphan_row():
     assert Video.objects(youtube_id=VID).first() is None
 
 
+def test_eager_mode_bypasses_broker_check():
+    from django.test.utils import override_settings
+
+    from apps.videos.models import Video
+
+    Video.objects.delete()
+    meta = {"title": "T", "channel": "C",
+            "thumbnail": "https://i.ytimg.com/vi/x/hqdefault.jpg", "duration_sec": 600}
+    with override_settings(CELERY_TASK_ALWAYS_EAGER=True), patch(
+        "apps.api_v1.views._check_redis", return_value=(False, None)), patch(
+        "services.youtube.get_video_metadata", return_value=dict(meta)), patch(
+        "apps.videos.tasks.process_video_task") as task:
+        task.delay.return_value = MagicMock(id="task-eager")
+        r = APIClient(HTTP_HOST="testserver").post(
+            "/api/v1/process-video", {"youtube_url": f"https://youtu.be/{VID}"},
+            format="json")
+    assert r.status_code == 202, r.content
+    assert r.json()["status"] == "processing"
+    assert Video.objects(youtube_id=VID).first() is not None
+
+
+def test_empty_broker_url_skips_ping():
+    from django.test.utils import override_settings
+
+    from apps.videos.models import Video
+
+    Video.objects.delete()
+    meta = {"title": "T", "channel": "C",
+            "thumbnail": "https://i.ytimg.com/vi/x/hqdefault.jpg", "duration_sec": 600}
+    with override_settings(CELERY_BROKER_URL=""), patch(
+        "apps.api_v1.views._check_redis",
+        side_effect=AssertionError("must not ping without a broker URL")), patch(
+        "services.youtube.get_video_metadata", return_value=dict(meta)), patch(
+        "apps.videos.tasks.process_video_task") as task:
+        task.delay.return_value = MagicMock(id="task-nourl")
+        r = APIClient(HTTP_HOST="testserver").post(
+            "/api/v1/process-video", {"youtube_url": f"https://youtu.be/{VID}"},
+            format="json")
+    assert r.status_code == 202, r.content
+
+
 def test_gemini_uses_request_timeout():
     import json
     import sys
