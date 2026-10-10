@@ -58,20 +58,35 @@ TEMPLATES = [
 ]
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
+# Throttling: relaxed under DEBUG so local review/testing never trips limits;
+# strict in production (DEPLOY-02). Per-scope classes live in
+# apps/api_v1/throttles.py and read these rates at request time.
+if DEBUG:
+    THROTTLE_RATES = {"anon": "100/min", "process_video": "100/min"}
+else:
+    THROTTLE_RATES = {"anon": "60/min", "process_video": "10/hour"}
+
 REST_FRAMEWORK = {
     "DEFAULT_RENDERER_CLASSES": ["rest_framework.renderers.JSONRenderer"],
     "DEFAULT_THROTTLE_CLASSES": ["rest_framework.throttling.AnonRateThrottle"],
-    "DEFAULT_THROTTLE_RATES": {"anon": "60/min", "process_video": "10/hour"},
+    "DEFAULT_THROTTLE_RATES": THROTTLE_RATES,
     "EXCEPTION_HANDLER": "apps.api_v1.exceptions.educlip_exception_handler",
 }
 
 CORS_ALLOW_ALL_ORIGINS = DEBUG
 
 # --- EduClip services ---
+# Every key the services read must be wired here — an env var that is set but
+# never assigned (as GEMINI_API_KEY once was) is silently ignored, so the LLM
+# stage fails while the operator believes a key is configured.
 MONGODB_ATLAS_URI = os.getenv("MONGODB_ATLAS_URI", "")
 MONGODB_DB_NAME = os.getenv("MONGODB_DB_NAME", "educlip")
 CELERY_BROKER_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
 CELERY_RESULT_BACKEND = os.getenv("CELERY_RESULT_BACKEND", "redis://localhost:6379/1")
+CELERY_TASK_ALWAYS_EAGER = os.getenv("CELERY_TASK_ALWAYS_EAGER", "False").lower() in (
+    "1", "true", "yes")
 YOUTUBE_API_KEY = os.getenv("YOUTUBE_API_KEY", "")
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 LLM_PROVIDER = os.getenv("LLM_PROVIDER", "openai")
 EDUCLIP_VERSION = "1.0.0"

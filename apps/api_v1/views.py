@@ -1,4 +1,5 @@
 """API v1 views: health (SETUP-01) + video processing (BACKEND-03)."""
+import logging
 import time
 
 from django.conf import settings
@@ -9,6 +10,8 @@ from rest_framework.response import Response
 from apps.api_v1.exceptions import request_id_of
 from apps.api_v1.serializers import ProcessVideoSerializer
 from apps.api_v1.throttles import ProcessVideoThrottle
+
+logger = logging.getLogger(__name__)
 
 
 def _check_redis():
@@ -57,6 +60,25 @@ def process_video(request):
             "details": {"fields": errors}, "request_id": rid,
             "retryable": False}}, status=400)
 
+    # Pre-flight: fail fast when no worker could ever pick this up. Without
+    # it a dead broker accepts the POST and strands the video at 5% forever.
+    # Skipped entirely when tasks run eagerly (CELERY_TASK_ALWAYS_EAGER), when
+    # no broker URL is configured, or for the in-memory transport — none of
+    # these have a Redis to ping. Dispatch itself still fails loudly via the
+    # delay guard below if publishing actually breaks.
+    broker_url = getattr(settings, "CELERY_BROKER_URL", "") or ""
+    brokerless = not broker_url or broker_url.startswith("memory://")
+    if not getattr(settings, "CELERY_TASK_ALWAYS_EAGER", False) and not brokerless:
+        broker_ok, _ = _check_redis()
+        if not broker_ok:
+            rid = request_id_of(request)
+            logger.warning("worker pre-flight failed: request_id=%s", rid)
+            return Response({"error": {
+                "code": "WORKER_UNAVAILABLE",
+                "message": "Video workers are unavailable (message broker unreachable). "
+                           "Start Redis and a Celery worker, then retry.",
+                "details": {}, "request_id": rid, "retryable": True}}, status=503)
+
     youtube_id = serializer.youtube_id
     idempotency_key = request.headers.get("Idempotency-Key", "")
     try:
@@ -85,8 +107,23 @@ def process_video(request):
         return Response({"video_id": video_id, "youtube_id": youtube_id,
                          "status": video.status, "progress": video.progress,
                          "poll_url": poll_url}, status=202)
-    task = process_video_task.delay(video_id)
+    try:
+        task = process_video_task.delay(video_id)
+    except Exception as exc:
+        # Broker died between pre-flight and publish: mark failed loudly
+        # instead of stranding the video at queued.
+        rid = request_id_of(request)
+        logger.exception("task dispatch failed: video_id=%s request_id=%s err=%s",
+                         video_id, rid, exc)
+        video.update(set__status="failed",
+                     set__error=f"Worker unavailable, retry later: {exc}"[:500])
+        return Response({"error": {"code": "WORKER_UNAVAILABLE",
+                                    "message": "Video workers are unavailable, retry later.",
+                                    "details": {}, "request_id": rid,
+                                    "retryable": True}}, status=503)
     video.update(set__task_id=task.id)
+    logger.info("task dispatched: video_id=%s task_id=%s youtube_id=%s request_id=%s",
+                video_id, task.id, youtube_id, request_id_of(request))
     return Response({"video_id": video_id, "youtube_id": youtube_id, "task_id": task.id,
                      "status": "processing", "progress": 0.05, "poll_url": poll_url,
                      "estimated_seconds": 45}, status=202)
