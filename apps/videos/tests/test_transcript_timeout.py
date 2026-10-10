@@ -162,6 +162,26 @@ def test_empty_broker_url_skips_ping():
     assert r.status_code == 202, r.content
 
 
+def test_memory_broker_url_skips_ping():
+    from django.test.utils import override_settings
+
+    from apps.videos.models import Video
+
+    Video.objects.delete()
+    meta = {"title": "T", "channel": "C",
+            "thumbnail": "https://i.ytimg.com/vi/x/hqdefault.jpg", "duration_sec": 600}
+    with override_settings(CELERY_BROKER_URL="memory://"), patch(
+        "apps.api_v1.views._check_redis",
+        side_effect=AssertionError("must not ping an in-memory broker")), patch(
+        "services.youtube.get_video_metadata", return_value=dict(meta)), patch(
+        "apps.videos.tasks.process_video_task") as task:
+        task.delay.return_value = MagicMock(id="task-memory")
+        r = APIClient(HTTP_HOST="testserver").post(
+            "/api/v1/process-video", {"youtube_url": f"https://youtu.be/{VID}"},
+            format="json")
+    assert r.status_code == 202, r.content
+
+
 def test_gemini_uses_request_timeout():
     import json
     import sys

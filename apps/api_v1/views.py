@@ -62,11 +62,13 @@ def process_video(request):
 
     # Pre-flight: fail fast when no worker could ever pick this up. Without
     # it a dead broker accepts the POST and strands the video at 5% forever.
-    # Skipped entirely when tasks run eagerly (synchronous inline execution
-    # needs no broker) or when no broker URL is configured (nothing to ping —
-    # dispatch itself still fails loudly via the delay guard below).
+    # Skipped entirely when tasks run eagerly, when no broker URL is
+    # configured, or when the broker is the in-memory transport — none of
+    # these have a Redis to ping (dispatch itself still fails loudly via the
+    # delay guard below if publishing actually breaks).
     broker_url = getattr(settings, "CELERY_BROKER_URL", "") or ""
-    if not getattr(settings, "CELERY_TASK_ALWAYS_EAGER", False) and broker_url:
+    brokerless = not broker_url or broker_url.startswith("memory://")
+    if not getattr(settings, "CELERY_TASK_ALWAYS_EAGER", False) and not brokerless:
         broker_ok, _ = _check_redis()
         if not broker_ok:
             rid = request_id_of(request)
