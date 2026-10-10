@@ -139,6 +139,63 @@ def test_gemini_uses_request_timeout():
     assert captured.get("request_options", {}).get("timeout") == llm_client.GEMINI_TIMEOUT_SEC
 
 
+def test_disabled_captions_fail_with_trace_and_clean_422():
+    import logging
+
+    from apps.videos.models import Video
+    from apps.videos.tasks import process_video_task
+    from apps.videos.video_service import get_or_create_video
+    from youtube_transcript_api._errors import TranscriptsDisabled
+
+    for doc in (Video,):
+        doc.objects.delete()
+    meta = {"title": "T", "channel": "C",
+            "thumbnail": "https://i.ytimg.com/vi/x/hqdefault.jpg", "duration_sec": 600}
+    records = []
+
+    class _H(logging.Handler):
+        def emit(self, record):
+            records.append(record)
+
+    api = MagicMock()
+    api.list.side_effect = TranscriptsDisabled(VID)
+    logger = logging.getLogger("services.youtube")
+    handler = _H()
+    old_level = logger.level
+    logger.setLevel(logging.WARNING)
+    logger.addHandler(handler)
+    try:
+        with patch("youtube_transcript_api.YouTubeTranscriptApi", return_value=api), patch(
+            "apps.videos.transcribe.fallback_transcribe.whisper_transcribe",
+            side_effect=TranscriptUnavailableError("no audio tool", retryable=False)):
+            # Unit: exact mapped error, no hang.
+            try:
+                youtube_svc.fetch_transcript(VID)
+            except TranscriptUnavailableError as exc:
+                assert "disabled" in str(exc).lower() and exc.retryable is False
+            else:
+                raise AssertionError("expected TranscriptsDisabled mapping")
+            # Chain: worker records failure, API answers 422 JSON (never hangs).
+            video, _ = get_or_create_video(VID, meta)
+            try:
+                process_video_task.run(str(video.id))
+            except Exception:
+                pass
+            video.reload()
+            # The stored error names the terminal tier; the disabled-captions
+            # root cause is in the traceback logs asserted below.
+            assert video.status == "failed" and video.error, video.status
+            r = APIClient(HTTP_HOST="testserver").get(
+                f"/api/v1/video/{video.id}/", HTTP_HOST="testserver")
+            assert r.status_code == 422
+            assert r.json()["error"]["code"] == "PROCESSING_FAILED"
+    finally:
+        logger.removeHandler(handler)
+        logger.setLevel(old_level)
+    assert any(getattr(r, "exc_info", None) for r in records), \
+        "failure must log the stack trace"
+
+
 if __name__ == "__main__":
     setup_module()
     try:

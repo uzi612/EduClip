@@ -145,14 +145,16 @@ def fetch_transcript(youtube_id, languages=PREFERRED_LANGUAGES,
     except TranscriptUnavailableError as exc:
         ms = int((time.perf_counter() - started) * 1000)
         logger.warning("transcript fetch failed: video=%s retryable=%s source=%s "
-                       "ms=%d err=%s", youtube_id, exc.retryable, exc.source, ms, exc)
+                       "ms=%d err=%s", youtube_id, exc.retryable, exc.source, ms, exc,
+                       exc_info=True)
         raise
     except Exception as exc:
         # Anything unexpected (library bugs, executor errors): never let the
         # worker hang or crash opaquely — report it as a retryable failure.
         ms = int((time.perf_counter() - started) * 1000)
         logger.warning("transcript fetch failed: video=%s retryable=True source=%s "
-                       "ms=%d err=%s", youtube_id, "youtube_captions", ms, exc)
+                       "ms=%d err=%s", youtube_id, "youtube_captions", ms, exc,
+                       exc_info=True)
         raise TranscriptUnavailableError(
             f"Transcript fetch failed for video {youtube_id}: {exc}",
             retryable=True, source="youtube_captions",
