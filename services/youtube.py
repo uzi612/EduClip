@@ -8,8 +8,14 @@ Tier T1 of the 3-tier pipeline (see docs/ARCHITECTURE.md §5):
 youtube-transcript-api is imported lazily so `manage.py check` works without
 optional ingestion dependencies installed.
 """
+import logging
 import re
+import time
+from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import TimeoutError as FuturesTimeoutError
 from urllib.parse import parse_qs, urlparse
+
+logger = logging.getLogger(__name__)
 
 VIDEO_ID_PATTERN = r"[A-Za-z0-9_-]{11}"
 VIDEO_ID_RE = re.compile(rf"^({VIDEO_ID_PATTERN})$")
@@ -22,6 +28,10 @@ MAX_FULL_TEXT_CHARS = 200_000
 TRUNCATION_MARKER = "…[truncated]"
 
 PREFERRED_LANGUAGES = ("en", "en-US", "en-GB")
+# Hard ceiling for the T1 caption fetch: youtube-transcript-api performs
+# blocking network I/O with no timeout of its own, so without this a
+# bot-walled request hangs the worker (and the UI) at 5% forever.
+TRANSCRIPT_TIMEOUT_SEC = 45
 
 
 class InvalidYouTubeURLError(ValueError):
@@ -91,23 +101,71 @@ def _snippet_to_dict(snippet):
     return {"start": float(get("start")), "duration": float(get("duration")), "text": str(text)}
 
 
-def fetch_transcript(youtube_id, languages=PREFERRED_LANGUAGES):
-    """Fetch timed captions (T1). Returns (segments, source).
+def fetch_transcript(youtube_id, languages=PREFERRED_LANGUAGES,
+                     timeout_sec=TRANSCRIPT_TIMEOUT_SEC):
+    """Fetch timed captions (T1) with a hard timeout. Returns (segments, source).
 
     Raises TranscriptUnavailableError with retryable=True for IP/rate blocks
-    (caller should try the next tier) and retryable=False when the video has
-    no captions or does not exist.
+    and timeouts (caller should try the next tier) and retryable=False when
+    the video has no captions or does not exist. Every outcome is logged with
+    the video id so the exact failure point shows in the Django terminal.
     """
     if not youtube_id or not VIDEO_ID_RE.match(youtube_id):
         raise InvalidYouTubeURLError(f"Not a valid YouTube video ID: {youtube_id!r}")
     try:
-        from youtube_transcript_api import YouTubeTranscriptApi
+        from youtube_transcript_api import YouTubeTranscriptApi  # noqa: F401
     except ImportError as exc:
         raise TranscriptUnavailableError(
             "youtube-transcript-api is not installed.", retryable=False,
             source="youtube_captions",
         ) from exc
 
+    logger.info("transcript fetch start: video=%s", youtube_id)
+    started = time.perf_counter()
+    # NOTE: shutdown(wait=False) on timeout — the stray worker thread is left
+    # to finish alone so a hung socket can never wedge the response path.
+    pool = ThreadPoolExecutor(max_workers=1, thread_name_prefix="educlip-transcript")
+    try:
+        try:
+            segments, source = pool.submit(
+                _fetch_once, youtube_id, tuple(languages)).result(timeout=timeout_sec)
+        finally:
+            # Never wait for a hung socket on the response path; a timed-out
+            # worker is left to finish alone (cancelled if still queued).
+            pool.shutdown(wait=False, cancel_futures=True)
+    except FuturesTimeoutError as exc:
+        ms = int((time.perf_counter() - started) * 1000)
+        logger.warning("transcript fetch TIMEOUT: video=%s after %ss (%sms)",
+                       youtube_id, timeout_sec, ms)
+        raise TranscriptUnavailableError(
+            f"Transcript fetch timed out after {timeout_sec}s for video {youtube_id} "
+            "(YouTube may be rate-limiting this network).",
+            retryable=True, source="youtube_captions",
+        ) from exc
+    except TranscriptUnavailableError as exc:
+        ms = int((time.perf_counter() - started) * 1000)
+        logger.warning("transcript fetch failed: video=%s retryable=%s source=%s "
+                       "ms=%d err=%s", youtube_id, exc.retryable, exc.source, ms, exc)
+        raise
+    except Exception as exc:
+        # Anything unexpected (library bugs, executor errors): never let the
+        # worker hang or crash opaquely — report it as a retryable failure.
+        ms = int((time.perf_counter() - started) * 1000)
+        logger.warning("transcript fetch failed: video=%s retryable=True source=%s "
+                       "ms=%d err=%s", youtube_id, "youtube_captions", ms, exc)
+        raise TranscriptUnavailableError(
+            f"Transcript fetch failed for video {youtube_id}: {exc}",
+            retryable=True, source="youtube_captions",
+        ) from exc
+    ms = int((time.perf_counter() - started) * 1000)
+    logger.info("transcript fetch done: video=%s source=%s segments=%d ms=%d",
+                youtube_id, source, len(segments), ms)
+    return segments, source
+
+
+def _fetch_once(youtube_id, languages):
+    """Single blocking T1 attempt (runs inside the timeout executor)."""
+    from youtube_transcript_api import YouTubeTranscriptApi
     from youtube_transcript_api._errors import (
         IpBlocked,
         NoTranscriptFound,

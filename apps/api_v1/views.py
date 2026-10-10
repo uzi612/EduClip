@@ -1,4 +1,5 @@
 """API v1 views: health (SETUP-01) + video processing (BACKEND-03)."""
+import logging
 import time
 
 from django.conf import settings
@@ -9,6 +10,8 @@ from rest_framework.response import Response
 from apps.api_v1.exceptions import request_id_of
 from apps.api_v1.serializers import ProcessVideoSerializer
 from apps.api_v1.throttles import ProcessVideoThrottle
+
+logger = logging.getLogger(__name__)
 
 
 def _check_redis():
@@ -85,8 +88,23 @@ def process_video(request):
         return Response({"video_id": video_id, "youtube_id": youtube_id,
                          "status": video.status, "progress": video.progress,
                          "poll_url": poll_url}, status=202)
-    task = process_video_task.delay(video_id)
+    try:
+        task = process_video_task.delay(video_id)
+    except Exception as exc:
+        # Broker down (no Redis/worker): without this the video sits at 5%
+        # forever with no error. Fail loudly instead of hanging the UI.
+        rid = request_id_of(request)
+        logger.exception("task dispatch failed: video_id=%s request_id=%s err=%s",
+                         video_id, rid, exc)
+        video.update(set__status="failed",
+                     set__error=f"Worker unavailable, retry later: {exc}"[:500])
+        return Response({"error": {"code": "WORKER_UNAVAILABLE",
+                                    "message": "Video workers are unavailable, retry later.",
+                                    "details": {}, "request_id": rid,
+                                    "retryable": True}}, status=503)
     video.update(set__task_id=task.id)
+    logger.info("task dispatched: video_id=%s task_id=%s youtube_id=%s request_id=%s",
+                video_id, task.id, youtube_id, request_id_of(request))
     return Response({"video_id": video_id, "youtube_id": youtube_id, "task_id": task.id,
                      "status": "processing", "progress": 0.05, "poll_url": poll_url,
                      "estimated_seconds": 45}, status=202)

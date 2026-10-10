@@ -8,11 +8,16 @@ See docs/ARCHITECTURE.md §6.
 """
 import hashlib
 import json
+import logging
 import random
 import time
 
+logger = logging.getLogger(__name__)
+
 OPENAI_MODEL = "gpt-4o-mini"
 OPENAI_TIMEOUT_SEC = 60
+GEMINI_MODEL = "gemini-1.5-flash"
+GEMINI_TIMEOUT_SEC = 60
 MAX_TRANSCRIPT_SEGMENTS = 800
 MAX_RETRIES = 2
 # Exponential backoff for LLM timeouts/quota (BACKEND-06): delay before the
@@ -85,6 +90,9 @@ def _call_openai(transcript, title):
     except Exception:
         api_key = ""
     client = OpenAI(api_key=api_key or None, timeout=OPENAI_TIMEOUT_SEC)
+    logger.info("llm call start: provider=openai title=%.60s chars=%d",
+                title, len(transcript))
+    started = time.perf_counter()
     try:
         resp = client.chat.completions.create(
             model=OPENAI_MODEL,
@@ -96,10 +104,14 @@ def _call_openai(transcript, title):
                 {"role": "user", "content": f"TITLE: {title}\nTRANSCRIPT:\n{transcript}"},
             ],
         )
-        return json.loads(resp.choices[0].message.content)
+        payload = json.loads(resp.choices[0].message.content)
+        logger.info("llm call done: provider=openai ms=%d",
+                    int((time.perf_counter() - started) * 1000))
+        return payload
     except LLMError:
         raise
     except Exception as exc:
+        logger.warning("llm call failed: provider=openai err=%s", exc)
         raise LLMError(f"OpenAI call failed: {exc}", retryable=True,
                        provider="openai") from exc
 
@@ -116,19 +128,31 @@ def _call_gemini(transcript, title):
         api_key = getattr(settings, "GEMINI_API_KEY", "")
     except Exception:
         api_key = ""
+    logger.info("llm call start: provider=gemini title=%.60s chars=%d",
+                title, len(transcript))
+    started = time.perf_counter()
     try:
         genai.configure(api_key=api_key or None)
         model = genai.GenerativeModel(
-            "gemini-1.5-flash",
+            GEMINI_MODEL,
             system_instruction=SYSTEM_PROMPT,
             generation_config={"response_mime_type": "application/json",
                                "temperature": 0.3, "max_output_tokens": 3000},
         )
-        resp = model.generate_content(f"TITLE: {title}\nTRANSCRIPT:\n{transcript}")
-        return json.loads(resp.text)
+        # request_options timeout: without it a stalled generation hangs the
+        # worker (and the UI) with no error, exactly like the transcript hang.
+        resp = model.generate_content(
+            f"TITLE: {title}\nTRANSCRIPT:\n{transcript}",
+            request_options={"timeout": GEMINI_TIMEOUT_SEC},
+        )
+        payload = json.loads(resp.text)
+        logger.info("llm call done: provider=gemini ms=%d",
+                    int((time.perf_counter() - started) * 1000))
+        return payload
     except LLMError:
         raise
     except Exception as exc:
+        logger.warning("llm call failed: provider=gemini err=%s", exc)
         raise LLMError(f"Gemini call failed: {exc}", retryable=True,
                        provider="gemini") from exc
 

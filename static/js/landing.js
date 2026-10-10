@@ -130,6 +130,11 @@
     }
     setBusy(true);
     setProgress("processing", 0.05);
+    // Stuck-queue guard: if the worker makes no forward progress for ~30s
+    // (e.g. backed-up queue), say so once instead of sitting at 5% silently.
+    var lastTick = "";
+    var stuckTicks = 0;
+    var stuckNoted = false;
     api
       .post("/process-video", { youtube_url: url })
       .then(function (data) {
@@ -137,6 +142,16 @@
         return api.pollVideo(data.video_id, {
           onTick: function (status, progress) {
             setProgress(status, progress);
+            var key = status + "|" + progress;
+            stuckTicks = key === lastTick ? stuckTicks + 1 : 0;
+            lastTick = key;
+            if (stuckTicks >= 10 && !stuckNoted) {
+              stuckNoted = true;
+              showToast(
+                "Still working on your video — large videos can take a few minutes.",
+                "info"
+              );
+            }
           },
         });
       })
