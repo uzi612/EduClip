@@ -18,7 +18,12 @@ if "testserver" not in settings.ALLOWED_HOSTS:
 
 import mongomock  # noqa: E402
 import mongoengine as me  # noqa: E402
+from django.test.utils import override_settings  # noqa: E402
 from rest_framework.test import APIClient  # noqa: E402
+
+# Forced empty so suites never touch real Atlas even when the developer's
+# local .env points at a live cluster (delete paths branch on this setting).
+_ISOLATION = None
 
 from apps.analytics.models import Analytics  # noqa: E402
 from apps.flashcards.models import Flashcard  # noqa: E402
@@ -38,12 +43,17 @@ STATS = {"word_count": 1200, "reading_minutes": 6, "avg_words_per_min": 200,
 
 
 def setup_module():
+    global _ISOLATION
     me.disconnect_all()
     me.connect("educlip-test", mongo_client_class=mongomock.MongoClient)
+    _ISOLATION = override_settings(MONGODB_ATLAS_URI="")
+    _ISOLATION.enable()
 
 
 def teardown_module():
     me.disconnect_all()
+    if _ISOLATION is not None:
+        _ISOLATION.disable()
 
 
 def _clean():

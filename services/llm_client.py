@@ -13,6 +13,9 @@ import time
 
 OPENAI_MODEL = "gpt-4o-mini"
 OPENAI_TIMEOUT_SEC = 60
+# gemini-1.5-flash was retired (API lists only 2.5-flash/generation aliases);
+# pin the stable 2.5-flash identifier so calls stop 404ing.
+GEMINI_MODEL = "gemini-2.5-flash"
 MAX_TRANSCRIPT_SEGMENTS = 800
 MAX_RETRIES = 2
 # Exponential backoff for LLM timeouts/quota (BACKEND-06): delay before the
@@ -81,10 +84,16 @@ def _call_openai(transcript, title):
     try:
         from django.conf import settings
 
-        api_key = getattr(settings, "OPENAI_API_KEY", "")
+        api_key = getattr(settings, "OPENAI_API_KEY", "") or ""
     except Exception:
         api_key = ""
-    client = OpenAI(api_key=api_key or None, timeout=OPENAI_TIMEOUT_SEC)
+    if not api_key:
+        raise LLMError(
+            "OPENAI_API_KEY is not configured. Set it in .env (see .env.example) "
+            "or switch provider with LLM_PROVIDER=gemini plus GEMINI_API_KEY.",
+            retryable=False, provider="openai",
+        )
+    client = OpenAI(api_key=api_key, timeout=OPENAI_TIMEOUT_SEC)
     try:
         resp = client.chat.completions.create(
             model=OPENAI_MODEL,
@@ -113,13 +122,19 @@ def _call_gemini(transcript, title):
     try:
         from django.conf import settings
 
-        api_key = getattr(settings, "GEMINI_API_KEY", "")
+        api_key = getattr(settings, "GEMINI_API_KEY", "") or ""
     except Exception:
         api_key = ""
+    if not api_key:
+        raise LLMError(
+            "GEMINI_API_KEY is not configured. Set it in .env (see .env.example) "
+            "to generate video insights.",
+            retryable=False, provider="gemini",
+        )
     try:
-        genai.configure(api_key=api_key or None)
+        genai.configure(api_key=api_key)
         model = genai.GenerativeModel(
-            "gemini-1.5-flash",
+            GEMINI_MODEL,
             system_instruction=SYSTEM_PROMPT,
             generation_config={"response_mime_type": "application/json",
                                "temperature": 0.3, "max_output_tokens": 3000},
