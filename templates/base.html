@@ -1,19 +1,19 @@
 {% load static %}
 <!DOCTYPE html>
-<html lang="en" class="dark">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="description" content="EduClip AI — Turn any YouTube video into an interactive course." />
   <title>{% block title %}EduClip AI{% endblock %}</title>
 
-  <!-- Theme: dark is default (v1); restore saved preference before paint to avoid FOUC -->
+  <!-- Theme: light is default; restore saved dark preference before paint to avoid FOUC -->
   <script>
     try {
-      if (localStorage.getItem("educlip-theme") === "light") {
-        document.documentElement.classList.remove("dark");
+      if (localStorage.getItem("educlip-theme") === "dark") {
+        document.documentElement.classList.add("dark");
       }
-    } catch (e) { /* private mode: stay dark */ }
+    } catch (e) { /* private mode: stay light */ }
   </script>
 
   <!-- Fonts: Inter (display/body) + JetBrains Mono (timestamps/IDs) -->

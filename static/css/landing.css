@@ -1,0 +1,415 @@
+/* static/css/landing.css — light SaaS landing aesthetic (wireframe).
+   Pastel radial gradients, elevated white cards, floating mock UI,
+   laptop mockup. All custom classes also carry dark: variants so the
+   theme toggle keeps working. Respects prefers-reduced-motion. */
+
+/* ---------- hero backdrop ---------- */
+.landing-hero {
+  position: relative;
+  isolation: isolate;
+}
+.landing-hero::before {
+  content: "";
+  position: absolute;
+  inset: -2rem 0 auto 0;
+  height: 34rem;
+  z-index: -1;
+  background:
+    radial-gradient(32rem 20rem at 12% 8%, rgba(59, 130, 246, 0.14), transparent 60%),
+    radial-gradient(36rem 22rem at 88% 12%, rgba(168, 85, 247, 0.16), transparent 60%),
+    radial-gradient(24rem 16rem at 55% 90%, rgba(34, 211, 238, 0.1), transparent 60%);
+}
+html.dark .landing-hero::before {
+  background:
+    radial-gradient(32rem 20rem at 12% 8%, rgba(139, 92, 246, 0.12), transparent 60%),
+    radial-gradient(36rem 22rem at 88% 12%, rgba(34, 211, 238, 0.08), transparent 60%);
+}
+
+/* ---------- input card ---------- */
+.landing-input-card {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.5rem 0.5rem 1rem;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 20px;
+  box-shadow: 0 20px 45px -18px rgba(80, 70, 180, 0.35);
+  transition: box-shadow 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+.landing-input-card:focus-within {
+  border-color: rgba(139, 92, 246, 0.6);
+  box-shadow: 0 24px 55px -18px rgba(124, 58, 237, 0.45);
+  transform: translateY(-1px);
+}
+html.dark .landing-input-card {
+  background: rgba(15, 23, 42, 0.7);
+  border-color: #1e293b;
+}
+.yt-badge {
+  display: grid;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 12px;
+  background: #fef2f2;
+  flex-shrink: 0;
+}
+html.dark .yt-badge {
+  background: rgba(239, 68, 68, 0.12);
+}
+.landing-input {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: 0;
+  outline: 0;
+  padding: 0.75rem 0.25rem;
+  font-size: 0.95rem;
+  color: #0f172a;
+}
+.landing-input::placeholder {
+  color: #94a3b8;
+}
+html.dark .landing-input {
+  color: #f3f4f6;
+}
+.landing-submit {
+  flex-shrink: 0;
+  padding: 0.8rem 1.4rem;
+  border-radius: 14px;
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: #fff;
+  background: #0f172a;
+  transition: background 0.2s ease, opacity 0.2s ease, transform 0.15s ease;
+}
+.landing-submit:hover {
+  background: #1e293b;
+}
+.landing-submit:active {
+  transform: scale(0.98);
+}
+.landing-submit:disabled {
+  opacity: 0.6;
+}
+html.dark .landing-submit {
+  background: #f3f4f6;
+  color: #0f172a;
+}
+html.dark .landing-submit:hover {
+  background: #fff;
+}
+
+/* ---------- demo chips ---------- */
+.demo-chip {
+  padding: 0.45rem 1rem;
+  border-radius: 9999px;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  color: #475569;
+  font-size: 0.82rem;
+  transition: border-color 0.2s ease, color 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
+}
+.demo-chip:hover {
+  border-color: rgba(139, 92, 246, 0.6);
+  color: #0f172a;
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px -10px rgba(124, 58, 237, 0.5);
+}
+html.dark .demo-chip {
+  border-color: #1e293b;
+  background: rgba(15, 23, 42, 0.5);
+  color: #9ca3af;
+}
+html.dark .demo-chip:hover {
+  color: #f3f4f6;
+}
+
+/* ---------- hero visual composition ---------- */
+.hero-visual {
+  position: relative;
+  min-height: 26rem;
+  isolation: isolate;
+}
+.hero-glow {
+  position: absolute;
+  inset: 8% 4%;
+  z-index: 0;
+  border-radius: 32px;
+  background: radial-gradient(closest-side, rgba(168, 85, 247, 0.28), rgba(59, 130, 246, 0.12), transparent 72%);
+  filter: blur(10px);
+}
+html.dark .hero-glow {
+  background: radial-gradient(closest-side, rgba(139, 92, 246, 0.22), transparent 72%);
+}
+.mock-player {
+  position: absolute;
+  z-index: 1;
+  left: 6%;
+  right: 18%;
+  top: 6%;
+  border-radius: 20px;
+  overflow: hidden;
+  background: #0b1120;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  box-shadow: 0 30px 60px -20px rgba(15, 23, 42, 0.55);
+}
+.mock-screen {
+  aspect-ratio: 16 / 8;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, #1e1b4b, #0e7490);
+}
+.mock-play {
+  display: grid;
+  place-items: center;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.9);
+  color: #0f172a;
+  font-size: 1rem;
+}
+.mock-playerbar {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.6rem 0.9rem;
+  background: rgba(2, 6, 23, 0.9);
+}
+.mock-playerbar span {
+  flex: 1;
+  height: 4px;
+  border-radius: 9999px;
+  background: linear-gradient(to right, #8b5cf6 62%, #334155 62%);
+}
+.mock-playerbar em {
+  font-style: normal;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.72rem;
+  color: #e2e8f0;
+}
+.mock-card {
+  position: absolute;
+  z-index: 2;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(8px);
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 0.9rem 1rem;
+  box-shadow: 0 24px 50px -20px rgba(15, 23, 42, 0.35);
+  animation: hero-float 6s ease-in-out infinite;
+}
+html.dark .mock-card {
+  background: rgba(15, 23, 42, 0.92);
+  border-color: #1e293b;
+}
+.mock-chapters {
+  right: 0;
+  top: 0;
+  width: 15rem;
+}
+.mock-flash {
+  left: 0;
+  bottom: 0;
+  width: 14rem;
+  animation-delay: -3s;
+}
+.mock-title {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #7c3aed;
+}
+html.dark .mock-title {
+  color: #a78bfa;
+}
+.mock-chapters ul {
+  margin-top: 0.5rem;
+  display: grid;
+  gap: 0.4rem;
+  font-size: 0.78rem;
+}
+.mock-chapters li {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  color: #334155;
+}
+html.dark .mock-chapters li {
+  color: #cbd5e1;
+}
+.mock-chapters em {
+  font-style: normal;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.7rem;
+  color: #06b6d4;
+  white-space: nowrap;
+}
+.mock-q {
+  margin-top: 0.4rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+html.dark .mock-q {
+  color: #f3f4f6;
+}
+.mock-a {
+  margin-top: 0.2rem;
+  font-size: 0.78rem;
+  color: #64748b;
+}
+html.dark .mock-a {
+  color: #9ca3af;
+}
+@keyframes hero-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+/* ---------- feature + pricing cards ---------- */
+.feature-card {
+  border-radius: 20px;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  padding: 1.5rem;
+  box-shadow: 0 14px 30px -20px rgba(15, 23, 42, 0.25);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.feature-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 22px 40px -20px rgba(124, 58, 237, 0.35);
+}
+html.dark .feature-card {
+  border-color: #1e293b;
+  background: rgba(15, 23, 42, 0.7);
+}
+.feature-badge {
+  display: inline-grid;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 14px;
+  font-size: 1.2rem;
+}
+.badge-amber { background: #fef3c7; }
+.badge-blue { background: #dbeafe; }
+.badge-violet { background: #ede9fe; }
+.badge-emerald { background: #d1fae5; }
+.pricing-highlight {
+  border-color: rgba(139, 92, 246, 0.5);
+  box-shadow: 0 18px 40px -18px rgba(124, 58, 237, 0.5);
+}
+
+/* ---------- CTA banner ---------- */
+.cta-banner {
+  border-radius: 24px;
+  border: 1px solid #e2e8f0;
+  background: linear-gradient(180deg, #fff, #f5f3ff);
+  padding: 2rem;
+  box-shadow: 0 24px 50px -24px rgba(124, 58, 237, 0.4);
+}
+@media (min-width: 640px) {
+  .cta-banner { padding: 3rem; }
+}
+html.dark .cta-banner {
+  border-color: #1e293b;
+  background: linear-gradient(180deg, rgba(30, 27, 75, 0.6), rgba(15, 23, 42, 0.7));
+}
+
+/* ---------- laptop mockup (pure CSS) ---------- */
+.laptop {
+  max-width: 30rem;
+  margin-inline: auto;
+  width: 100%;
+}
+.laptop-screen {
+  border-radius: 16px 16px 0 0;
+  border: 1px solid #cbd5e1;
+  border-bottom: 0;
+  background: #fff;
+  overflow: hidden;
+  box-shadow: 0 30px 60px -25px rgba(15, 23, 42, 0.4);
+}
+html.dark .laptop-screen {
+  border-color: #1e293b;
+  background: #0b1120;
+}
+.laptop-bar {
+  display: flex;
+  gap: 0.35rem;
+  padding: 0.6rem 0.9rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+html.dark .laptop-bar {
+  border-color: #1e293b;
+}
+.laptop-bar span {
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: 9999px;
+  background: #cbd5e1;
+}
+.laptop-bar span:first-child { background: #f87171; }
+.laptop-bar span:nth-child(2) { background: #fbbf24; }
+.laptop-bar span:nth-child(3) { background: #34d399; }
+.laptop-body {
+  display: grid;
+  gap: 0.6rem;
+  padding: 0.9rem;
+}
+.laptop-player {
+  display: grid;
+  place-items: center;
+  height: 7rem;
+  border-radius: 12px;
+  color: #fff;
+  background: linear-gradient(135deg, #4c1d95, #0e7490);
+}
+.laptop-rows {
+  display: grid;
+  gap: 0.4rem;
+}
+.laptop-rows span {
+  height: 0.7rem;
+  border-radius: 9999px;
+  background: #e2e8f0;
+}
+html.dark .laptop-rows span {
+  background: #1e293b;
+}
+.laptop-rows span:nth-child(2) { width: 82%; }
+.laptop-rows span:nth-child(3) { width: 64%; }
+.laptop-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.4rem;
+  height: 3.5rem;
+  margin-top: 0.2rem;
+}
+.laptop-chart i {
+  flex: 1;
+  border-radius: 4px;
+  background: linear-gradient(180deg, #8b5cf6, #22d3ee);
+}
+.laptop-chart i:nth-child(1) { height: 45%; }
+.laptop-chart i:nth-child(2) { height: 70%; }
+.laptop-chart i:nth-child(3) { height: 55%; }
+.laptop-chart i:nth-child(4) { height: 90%; }
+.laptop-chart i:nth-child(5) { height: 65%; }
+.laptop-base {
+  height: 0.7rem;
+  border-radius: 0 0 16px 16px;
+  background: linear-gradient(180deg, #cbd5e1, #94a3b8);
+}
+html.dark .laptop-base {
+  background: linear-gradient(180deg, #1e293b, #0f172a);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mock-card { animation: none; }
+  .feature-card:hover, .demo-chip:hover { transform: none; }
+}
