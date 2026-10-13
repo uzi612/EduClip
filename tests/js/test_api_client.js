@@ -173,6 +173,25 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     if (!btn) throw new Error("no retry button");
   });
 
+  await t("request timeout accommodates Gemini latency", async () => {
+    eq(api.timeoutMs >= 60000, true);
+    eq(api.pollIntervalMs >= 2000 && api.pollIntervalMs <= 3000, true);
+  });
+
+  await t("202 Accepted flows into polling until ready", async () => {
+    api.pollIntervalMs = 5;
+    queue = [
+      ok({ video_id: "v2", youtube_id: "y2", status: "processing", progress: 0.05 }),
+      ok({ status: "processing", progress: 0.2 }),
+      ok({ status: "ready", video_id: "v2" }),
+    ];
+    const submitted = await api.post("/process-video", { youtube_url: "x" });
+    eq(submitted.status, "processing");
+    const done = await api.pollVideo(submitted.video_id, {});
+    eq(done.status, "ready");
+    api.pollIntervalMs = 3000;
+  });
+
   await t("idempotency key falls back without randomUUID", async () => {
     const real = crypto.randomUUID;
     crypto.randomUUID = undefined;
