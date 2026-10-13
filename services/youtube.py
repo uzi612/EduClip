@@ -234,6 +234,26 @@ def normalize_segments(segments, merge_gap=1.2, max_chars=MAX_FULL_TEXT_CHARS):
     return final, full_text
 
 
+def parse_iso8601_duration(value):
+    """Parse YouTube contentDetails durations (e.g. PT10M5S) to seconds.
+
+    Returns 0 for missing/garbled values — never raises, so a weird API
+    response degrades to a clear metadata error instead of a crash.
+    """
+    import re as _re
+
+    m = _re.fullmatch(r"P(?:(\d+)D)?T(?:(\d+)H)?(?:(\d+)M)?(?:(\d+(?:\.\d+)?)S)?",
+                       str(value or "").strip().upper())
+    if not m:
+        return 0
+    days, hours, minutes, seconds = m.groups()
+    try:
+        return (int(days or 0) * 86400 + int(hours or 0) * 3600
+                + int(minutes or 0) * 60 + int(float(seconds or 0)))
+    except (TypeError, ValueError):
+        return 0
+
+
 def get_video_metadata(youtube_id):
     """Fetch title/channel/duration/thumbnail with a keyless fallback chain.
 
@@ -264,12 +284,18 @@ def get_video_metadata(youtube_id):
             raise TranscriptUnavailableError(
                 f"Video {youtube_id} not found.", retryable=False, source="metadata")
         snippet = items[0].get("snippet", {})
+        content = items[0].get("contentDetails", {})
         meta.update({
             "title": snippet.get("title", ""),
             "channel": snippet.get("channelTitle", ""),
             "thumbnail": (snippet.get("thumbnails", {}).get("high", {}).get("url")
                           or meta["thumbnail"]),
+            "duration_sec": parse_iso8601_duration(content.get("duration", "")),
         })
+        if meta["duration_sec"] <= 0:
+            raise TranscriptUnavailableError(
+                f"Video {youtube_id} returned no usable duration.", retryable=False,
+                source="metadata")
         return meta
     except TranscriptUnavailableError:
         raise
