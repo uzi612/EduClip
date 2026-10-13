@@ -81,6 +81,7 @@ def detail_video(video, analytics=None):
         "keywords": keywords,
         "flashcard_count": video.flashcard_count or 0,
         "analytics_preview": preview,
+        "graphs": dict(analytics.graphs) if analytics is not None else {},
         "updated_at": iso8601(video.updated_at),
     })
     return payload

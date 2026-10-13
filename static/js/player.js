@@ -34,12 +34,33 @@
     return m + ":" + String(s).padStart(2, "0");
   }
 
+  function fmtDurLen(sec) {
+    sec = Math.max(0, Math.floor(Number(sec) || 0));
+    if (sec < 60) return sec + "s";
+    var mins = Math.round(sec / 60);
+    return mins + (mins === 1 ? " min" : " mins");
+  }
+
+  // Rich text lives in api.js; fall back to plain escaping if it failed to load.
+  var RT = typeof richText === "function" ? richText : esc;
+
   function videoIdFromPath() {
     var m = window.location.pathname.match(/^\/watch\/([^/]+)\/?$/);
     return m ? decodeURIComponent(m[1]) : null;
   }
 
   /* ---------- global seek: every timestamp in the app drives playback ---------- */
+
+  window.getPlayerTime = function () {
+    if (player && playerReady && typeof player.getCurrentTime === "function") {
+      try {
+        return Math.floor(player.getCurrentTime());
+      } catch (_) {
+        return 0;
+      }
+    }
+    return 0;
+  };
 
   window.seekToTimestamp = function (seconds) {
     var t = Math.max(0, Math.floor(Number(seconds) || 0));
@@ -163,13 +184,13 @@
       '<div class="flex justify-between text-sm"><span class="font-mono text-cyan-400">' +
       esc(fmtStamp(c.start_sec)) +
       '</span><span class="text-gray-500 font-mono">' +
-      esc(fmtStamp(dur)) +
-      " min</span></div>" +
+      esc(fmtDurLen(dur)) +
+      "</span></div>" +
       '<div class="font-semibold group-hover:text-violet-300 transition">' +
       esc(c.title || "Untitled chapter") +
       "</div>" +
       (c.summary
-        ? '<p class="chapter-preview text-sm text-gray-400 line-clamp-2 mt-1">' + esc(c.summary) + "</p>"
+        ? '<p class="chapter-preview text-sm text-gray-400 line-clamp-2 mt-1">' + RT(c.summary) + "</p>"
         : "") +
       "</button>" +
       '<button type="button" class="chapter-toggle shrink-0 px-3 text-gray-500 hover:text-gray-100 transition" aria-expanded="false" aria-controls="chapter-detail-' + i + '" aria-label="Expand chapter details">' +
@@ -177,7 +198,7 @@
       "</button></div>" +
       '<div id="chapter-detail-' + i + '" class="chapter-detail"><div>' +
       '<div class="px-4 pb-4 pt-1 space-y-3 border-t border-slate-800/70">' +
-      (c.summary ? '<p class="text-sm text-gray-300 leading-relaxed">' + esc(c.summary) + "</p>" : "") +
+      (c.summary ? '<div class="text-sm text-gray-300 leading-relaxed rich-text">' + RT(c.summary) + "</div>" : "") +
       (keywords ? '<div class="flex flex-wrap gap-1.5">' + keywords + "</div>" : "") +
       '<div class="flex items-center justify-between gap-2">' +
       '<span class="text-xs font-mono text-gray-500">' + esc(fmtStamp(c.start_sec)) + " → " + esc(fmtStamp(c.end_sec)) + "</span>" +
@@ -211,9 +232,85 @@
     if (first) setRowOpen(first, true); // first chapter expanded by default
   };
 
+  window.renderSummary = function (v) {
+    var card = $("summaryCard");
+    var body = $("summaryBody");
+    if (!card || !body) return;
+    if (v && v.summary) {
+      body.innerHTML = RT(v.summary);
+      card.classList.remove("hidden");
+    } else {
+      card.classList.add("hidden");
+    }
+  };
+
+  function statPill(value, label) {
+    return (
+      '<span class="inline-flex items-baseline gap-1.5 px-3 py-1.5 rounded-full border border-slate-800 bg-slate-900/70 text-sm">' +
+      '<span class="font-bold text-gray-100">' + esc(value) + "</span>" +
+      '<span class="text-gray-500 text-xs">' + esc(label) + "</span></span>"
+    );
+  }
+
+  function renderTopStrips(v) {
+    var stats = $("statStrip");
+    var strip = $("keywordStrip");
+    var preview = v && v.analytics_preview;
+    if (stats) {
+      if (preview) {
+        stats.innerHTML =
+          statPill(preview.reading_minutes, "min read") +
+          statPill(preview.chapter_count, "chapters") +
+          statPill((v.keywords || []).length, "keywords");
+        stats.classList.remove("hidden");
+      } else {
+        stats.classList.add("hidden");
+      }
+    }
+    if (strip) {
+      var kws = ((v && v.keywords) || []).slice(0, 8);
+      if (!kws.length) {
+        strip.classList.add("hidden");
+        return;
+      }
+      strip.innerHTML = kws
+        .map(function (k) {
+          return (
+            '<button type="button" data-keyword="' + esc(k.term) + '" title="' +
+            esc(k.count + " mentions · score " + k.score) + '"' +
+            ' class="px-3 py-1.5 rounded-full border border-cyan-500/30 bg-cyan-500/10 text-cyan-300 text-xs font-mono hover:border-cyan-400/60 transition">' +
+            esc(k.term) + " · " + esc(k.count) + "</button>"
+          );
+        })
+        .join("");
+      strip.classList.remove("hidden");
+    }
+  }
+
+  // Keyword pills highlight every chapter mentioning the term.
+  document.addEventListener("click", function (e) {
+    var pill = e.target.closest("[data-keyword]");
+    if (!pill) return;
+    var term = (pill.getAttribute("data-keyword") || "").toLowerCase();
+    if (!term) return;
+    var hits = 0;
+    var rows = document.querySelectorAll(".chapter-row");
+    for (var i = 0; i < rows.length; i++) {
+      var hay = (rows[i].textContent || "").toLowerCase();
+      var on = term && hay.indexOf(term) !== -1;
+      rows[i].classList.toggle("ring-2", on);
+      rows[i].classList.toggle("ring-cyan-400", on);
+      if (on) hits++;
+    }
+    if (typeof showToast === "function") {
+      showToast(hits ? hits + " chapter(s) mention this term." : "No chapter mentions this term.", "info");
+    }
+  });
+
   function renderHeader(v) {
     var title = $("videoTitle");
     var meta = $("videoMeta");
+    renderTopStrips(v);
     if (title) title.textContent = v.title || "Untitled video";
     if (meta) {
       var bits = [];
@@ -277,6 +374,8 @@
 
   function hydrate(data) {
     renderHeader(data);
+    window.EDUCLIP = window.EDUCLIP || {};
+    window.EDUCLIP.video = data; // stash for notes/export modules
     store.setVideo(data); // -> chapters (+ flashcards when present) via the store
     if (typeof window.renderCharts === "function") {
       window.renderCharts(data.graphs, data.video_id);

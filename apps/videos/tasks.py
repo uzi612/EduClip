@@ -27,10 +27,15 @@ def process_video_task(self, video_id):
     if video.status == "ready":
         return {"status": "ready", "video_id": video_id}
 
+    task_id = getattr(self.request, "id", "-")
+    logger.info("task received: task_id=%s video_id=%s youtube_id=%s", task_id,
+                video_id, video.youtube_id)
     try:
         video.update(set__status="processing", set__progress=0.2)
         video.reload()
         segments, full_text, source = transcribe_mod.transcribe_video(video.youtube_id)
+        logger.info("task transcribed: task_id=%s video_id=%s source=%s segments=%d",
+                    task_id, video_id, source, len(segments))
         video.update(
             set__transcript_segments=[
                 TranscriptSegment(start=s["start"], duration=s["duration"], text=s["text"])
@@ -43,6 +48,7 @@ def process_video_task(self, video_id):
             set__progress=0.7,
         )
         video.reload()
+        logger.info("task analyzing: task_id=%s video_id=%s", task_id, video_id)
         result = run_analysis(segments, video.title, video.duration_sec)
         cards = result.get("flashcards", [])[:20]
         video.update(
@@ -73,8 +79,8 @@ def process_video_task(self, video_id):
             set__graphs=result.get("graphs", {}),
             upsert=True,
         )
-        logger.info("process_video_task: %s ready (degraded=%s)", video_id,
-                    result.get("degraded", False))
+        logger.info("task ready: task_id=%s video_id=%s degraded=%s cards=%d",
+                    task_id, video_id, result.get("degraded", False), len(cards))
         return {"status": "ready", "video_id": video_id,
                 "degraded": bool(result.get("degraded", False))}
     except Exception as exc:
@@ -82,5 +88,6 @@ def process_video_task(self, video_id):
             video.update(set__status="failed", set__error=str(exc)[:500])
         except Exception:
             pass
-        logger.exception("process_video_task: %s failed", video_id)
+        logger.exception("task failed: task_id=%s video_id=%s err=%s", task_id,
+                         video_id, exc)
         raise self.retry(exc=exc, countdown=2 ** self.request.retries * 10)
