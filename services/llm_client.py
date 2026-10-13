@@ -41,7 +41,8 @@ timestamps, return STRICT JSON with exactly these keys:
 - keywords: [{"term": str, "score": float 0-1}] (5-10 key domain terms).
 - flashcards: 8-12 items [{"front": str (question, <=140 chars),
   "back": str (answer, <=300 chars), "timestamp_sec": int}].
-Return JSON only, no markdown fences."""
+Return JSON only, no markdown fences.
+CRITICAL CONSTRAINT: You must generate all summaries, titles, chapter breakdowns, key terms, flashcards, and notes strictly in English, regardless of the input language of the video transcript."""
 
 _cache: dict = {}
 
