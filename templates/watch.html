@@ -19,6 +19,12 @@
     <div id="degradedBanner" class="hidden mt-3 rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-300" role="status">
       ⚠ Showing fallback analysis — <span id="degradedDetail">some sections may be approximate.</span>
     </div>
+    <div id="summaryCard" class="hidden mt-4 rounded-2xl border border-slate-800 bg-slate-900/70 backdrop-blur-xl p-6 shadow-2xl">
+      <h2 class="text-xs font-bold tracking-widest text-violet-300">EXECUTIVE SUMMARY</h2>
+      <div id="summaryBody" class="mt-2 text-gray-200 leading-relaxed"></div>
+    </div>
+    <div id="statStrip" class="hidden mt-4 flex flex-wrap gap-2" aria-label="Video statistics"></div>
+    <div id="keywordStrip" class="hidden mt-3 flex flex-wrap gap-2" aria-label="Top keywords"></div>
   </div>
 
   <div class="grid lg:grid-cols-3 gap-6 mt-6">
@@ -46,7 +52,16 @@
         <button id="flashPrev" type="button" aria-label="Previous flashcard" class="grid place-items-center w-9 h-9 rounded-xl border border-slate-800 bg-slate-900/70 text-gray-400 hover:text-gray-100 hover:border-violet-500/50 transition">←</button>
         <button id="flashNext" type="button" aria-label="Next flashcard" class="grid place-items-center w-9 h-9 rounded-xl border border-slate-800 bg-slate-900/70 text-gray-400 hover:text-gray-100 hover:border-violet-500/50 transition">→</button>
         <button id="flashShuffle" type="button" class="px-3 py-2 rounded-xl text-sm border border-slate-800 bg-slate-900/70 text-gray-400 hover:text-gray-100 hover:border-violet-500/50 transition">Shuffle</button>
+        <button id="deckMode" type="button" aria-pressed="false" class="px-3 py-2 rounded-xl text-sm border border-slate-800 bg-slate-900/70 text-gray-400 hover:text-gray-100 hover:border-violet-500/50 transition">Quiz mode</button>
       </div>
+    </div>
+    <div id="diffFilters" class="mt-3 flex flex-wrap gap-2" aria-label="Filter by difficulty"></div>
+    <div id="quizBar" class="hidden mt-3 flex flex-wrap items-center gap-2 rounded-xl border border-violet-500/40 bg-violet-500/10 px-4 py-2.5" aria-live="polite">
+      <span id="quizScore" class="text-sm font-mono text-violet-300">0 / 0</span>
+      <span class="flex-1"></span>
+      <button id="quizGot" type="button" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-600/80 hover:bg-emerald-600 transition">✓ Got it</button>
+      <button id="quizMissed" type="button" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-red-600/80 hover:bg-red-600 transition">✗ Missed</button>
+      <button id="quizRestart" type="button" class="px-3 py-1.5 rounded-lg text-xs border border-slate-700 text-gray-300 hover:text-white transition">Restart</button>
     </div>
     <div id="flashDeck" class="mt-4 grid sm:grid-cols-2 lg:grid-cols-3 gap-6"></div>
     <div id="flashEmpty" class="hidden mt-4 rounded-2xl border border-dashed border-slate-800 p-10 text-center">
@@ -122,6 +137,26 @@
     </div>
     </div>
   </section>
+  <section class="mt-8 grid lg:grid-cols-2 gap-6" aria-label="Notes and export">
+    <div class="rounded-2xl border border-slate-800 bg-slate-900/50 p-4 sm:p-6">
+      <div class="flex items-center justify-between gap-2 flex-wrap">
+        <h2 class="text-lg font-bold tracking-tight">Scratchpad</h2>
+        <button id="scratchStamp" type="button" class="px-3 py-1.5 rounded-lg text-xs font-semibold border border-slate-700 text-gray-300 hover:text-white hover:border-cyan-500/50 transition">＋ Insert timestamp</button>
+      </div>
+      <textarea id="scratchText" rows="6" placeholder="Take timestamped notes while you watch… (saved in this browser)"
+        class="mt-3 w-full rounded-xl border border-slate-800 bg-black/40 p-3 text-sm text-gray-200 placeholder:text-gray-500 outline-none focus:border-violet-500/60 transition"></textarea>
+      <p id="scratchSaved" class="mt-2 text-xs text-gray-500" aria-live="polite"></p>
+    </div>
+    <div class="rounded-2xl border border-slate-800 bg-slate-900/50 p-4 sm:p-6">
+      <h2 class="text-lg font-bold tracking-tight">Export study pack</h2>
+      <p class="mt-1 text-sm text-gray-400">Summary, chapters, flashcards, and keywords for this video.</p>
+      <div class="mt-4 flex flex-wrap gap-2">
+        <button id="exportMd" type="button" class="px-4 py-2 rounded-xl text-sm font-semibold bg-gradient-to-r from-violet-600 to-cyan-500 hover:opacity-90 transition">⤓ Markdown</button>
+        <button id="exportPrint" type="button" class="px-4 py-2 rounded-xl text-sm border border-slate-700 text-gray-300 hover:text-white hover:border-violet-500/50 transition">⎙ Print / PDF</button>
+      </div>
+      <p class="mt-3 text-xs text-gray-500">Markdown downloads a .md file; Print opens the print dialog (save as PDF).</p>
+    </div>
+  </section>
 </div>
 {% endblock %}
 
@@ -129,4 +164,5 @@
 <script src="{% static 'js/player.js' %}"></script>
 <script src="{% static 'js/flashcards.js' %}"></script>
 <script src="{% static 'js/charts.js' %}"></script>
+<script src="{% static 'js/notes.js' %}"></script>
 {% endblock %}

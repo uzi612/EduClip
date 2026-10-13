@@ -191,6 +191,35 @@ const store = {
   },
 };
 
+function escHtml(s) {
+  return String(s == null ? "" : s)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+// Rich-text renderer: escaped HTML with fenced code blocks, inline code,
+// $math$ spans, and **bold** restored on top. Anything unrecognized stays
+// escaped plain text, so untrusted LLM output can never inject markup.
+function richText(raw) {
+  const fenced = [];
+  let html = escHtml(raw).replace(/```([\s\S]*?)```/g, function (_, code) {
+    fenced.push('<pre class="rich-code">' + code.replace(/^\n+|\n+$/g, "") + "</pre>");
+    return "\u0000" + (fenced.length - 1) + "\u0000";
+  });
+  html = html
+    .replace(/`([^`\n]+)`/g, "<code class=\"rich-code-inline\">$1</code>")
+    .replace(/\$\$([^$]+)\$\$/g, '<span class="math math-block">$1</span>')
+    .replace(/\$([^$\n]+)\$/g, '<span class="math">$1</span>')
+    .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
+    .replace(/\n/g, "<br>");
+  return html.replace(/\u0000(\d+)\u0000/g, function (_, i) {
+    return fenced[Number(i)] || "";
+  });
+}
+
 function showToast(message, type, action) {
   type = type || "info";
   const wrap = document.getElementById("toastWrap");

@@ -6,6 +6,16 @@
 
   var cards = [];
   var current = -1;
+  var filter = "all";
+  var quiz = null; // {order: [visibleIdx...], pos: number, got: number, missed: number}
+  var RTF = typeof richText === "function" ? richText : esc;
+
+  function visibleCards() {
+    if (filter === "all") return cards.slice();
+    return cards.filter(function (c) {
+      return (c.difficulty || "medium") === filter;
+    });
+  }
 
   var DIFF_STYLE = {
     easy: "bg-emerald-500/15 text-emerald-300 border-emerald-500/30",
@@ -83,7 +93,7 @@
       '<span class="mt-4 text-xs text-gray-400">Click to reveal →</span>' +
       "</div>" +
       '<div class="flash-face flash-back">' +
-      '<p class="text-sm leading-relaxed">' + esc(c.back || "") + "</p>" +
+      '<div class="text-sm leading-relaxed rich-text">' + RTF(c.back || "") + "</div>" +
       '<button type="button" data-seek="' + esc(c.timestamp_sec || 0) + '" class="mt-4 text-xs underline underline-offset-2 self-start hover:opacity-80 transition">↗ Jump to ' +
       esc(fmtStamp(c.timestamp_sec)) +
       "</button>" +
@@ -99,11 +109,110 @@
     return out;
   }
 
+  function paintQuizBar() {
+    var bar = $("quizBar");
+    var score = $("quizScore");
+    if (!bar) return;
+    if (!quiz) {
+      bar.classList.add("hidden");
+      return;
+    }
+    bar.classList.remove("hidden");
+    var total = quiz.order.length;
+    if (score) score.textContent = quiz.got + " ✓ · " + quiz.missed + " ✗ · Q " +
+      Math.min(quiz.pos + 1, total) + " / " + total;
+    var counter = $("flashCounter");
+    if (counter) counter.textContent = "Quiz " + Math.min(quiz.pos + 1, total) + " / " + total;
+  }
+
+  function renderFilters() {
+    var wrap = $("diffFilters");
+    if (!wrap) return;
+    var levels = ["all", "easy", "medium", "hard"];
+    wrap.innerHTML = levels
+      .map(function (lv) {
+        var on = lv === filter;
+        return (
+          '<button type="button" data-diff="' + lv + '" aria-pressed="' + on + '"' +
+          ' class="px-3 py-1.5 rounded-full text-xs font-mono border transition ' +
+          (on
+            ? "border-violet-500/60 bg-violet-500/15 text-violet-200"
+            : "border-slate-800 bg-slate-900/50 text-gray-400 hover:text-gray-100") +
+          '">' + lv + "</button>"
+        );
+      })
+      .join("");
+  }
+
+  function quizCard() {
+    var vis = visibleCards();
+    if (!quiz || quiz.pos >= quiz.order.length) return null;
+    return vis[quiz.order[quiz.pos]] || null;
+  }
+
+  function enterQuiz() {
+    var vis = visibleCards();
+    if (!vis.length) return;
+    var order = vis.map(function (_, i) {
+      return i;
+    });
+    for (var i = order.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var tmp = order[i];
+      order[i] = order[j];
+      order[j] = tmp;
+    }
+    quiz = { order: order, pos: 0, got: 0, missed: 0 };
+    var mode = $("deckMode");
+    if (mode) {
+      mode.textContent = "Exit quiz";
+      mode.setAttribute("aria-pressed", "true");
+    }
+    render();
+  }
+
+  function exitQuiz() {
+    quiz = null;
+    var mode = $("deckMode");
+    if (mode) {
+      mode.textContent = "Quiz mode";
+      mode.setAttribute("aria-pressed", "false");
+    }
+    render();
+  }
+
+  function answerQuiz(ok) {
+    if (!quiz) return;
+    if (ok) quiz.got++;
+    else quiz.missed++;
+    quiz.pos++;
+    if (quiz.pos >= quiz.order.length) {
+      paintQuizBar();
+      if (typeof showToast === "function") {
+        showToast("Quiz done: " + quiz.got + " correct, " + quiz.missed + " missed.", "success");
+      }
+      exitQuiz();
+      return;
+    }
+    render();
+  }
+
   function render() {
     var deck = $("flashDeck");
     var empty = $("flashEmpty");
     if (!deck) return;
-    if (!cards.length) {
+    renderFilters();
+    var vis = visibleCards();
+    if (quiz) {
+      var card = quizCard();
+      if (empty) empty.classList.add("hidden");
+      deck.innerHTML = card ? cardHTML(card) : "";
+      current = 0;
+      paintQuizBar();
+      return;
+    }
+    paintQuizBar();
+    if (!vis.length) {
       deck.innerHTML = "";
       if (empty) empty.classList.remove("hidden");
       current = -1;
@@ -111,15 +220,23 @@
       return;
     }
     if (empty) empty.classList.add("hidden");
-    deck.innerHTML = cards.map(cardHTML).join("");
-    if (current < 0 || current >= cards.length) current = 0;
+    deck.innerHTML = vis.map(cardHTML).join("");
+    if (current < 0 || current >= vis.length) current = 0;
     highlight();
   }
 
   window.renderFlashcards = function (list, videoId) {
     if (Array.isArray(list) && list.length) {
       cards = list.slice();
+      window.EDUCLIP = window.EDUCLIP || {};
+      window.EDUCLIP.flashcards = cards.slice(); // shared read-only for export
       current = 0;
+      quiz = null;
+      var mode = $("deckMode");
+      if (mode) {
+        mode.textContent = "Quiz mode";
+        mode.setAttribute("aria-pressed", "false");
+      }
       render();
       return;
     }
@@ -129,6 +246,8 @@
         .get("/video/" + encodeURIComponent(videoId) + "/flashcards?page=1&page_size=50")
         .then(function (data) {
           cards = (data && data.flashcards) || [];
+          window.EDUCLIP = window.EDUCLIP || {};
+          window.EDUCLIP.flashcards = cards.slice();
           current = 0;
           render();
         })
@@ -143,6 +262,10 @@
   };
 
   function shuffle() {
+    if (quiz) {
+      enterQuiz(); // re-deal the quiz order
+      return;
+    }
     for (var i = cards.length - 1; i > 0; i--) {
       var j = Math.floor(Math.random() * (i + 1));
       var tmp = cards[i];
@@ -156,8 +279,16 @@
   }
 
   function step(d) {
-    if (!cards.length) return;
-    current = (current + d + cards.length) % cards.length;
+    if (quiz) {
+      // Arrow keys skip without scoring in quiz mode.
+      quiz.pos = (quiz.pos + d + quiz.order.length) % quiz.order.length;
+      render();
+      focusCurrent(true);
+      return;
+    }
+    var vis = visibleCards();
+    if (!vis.length) return;
+    current = (current + d + vis.length) % vis.length;
     highlight();
     focusCurrent(true);
   }
@@ -194,7 +325,36 @@
     if (prev) prev.addEventListener("click", function () { step(-1); });
     if (next) next.addEventListener("click", function () { step(1); });
     if (sh) sh.addEventListener("click", shuffle);
+    var mode = $("deckMode");
+    if (mode) mode.addEventListener("click", function () {
+      if (quiz) exitQuiz();
+      else enterQuiz();
+    });
+    var got = $("quizGot");
+    var missed = $("quizMissed");
+    var restart = $("quizRestart");
+    if (got) got.addEventListener("click", function () { answerQuiz(true); });
+    if (missed) missed.addEventListener("click", function () { answerQuiz(false); });
+    if (restart) restart.addEventListener("click", function () { enterQuiz(); });
+    renderFilters();
   }
+
+  document.addEventListener("click", function (e) {
+    var chip = e.target.closest("[data-diff]");
+    if (!chip) return;
+    filter = chip.getAttribute("data-diff") || "all";
+    current = 0;
+    if (quiz) {
+      var mode = $("deckMode");
+      quiz = null;
+      if (mode) {
+        mode.textContent = "Quiz mode";
+        mode.setAttribute("aria-pressed", "false");
+      }
+    }
+    render();
+    focusCurrent(false);
+  });
 
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", boot);
