@@ -1,13 +1,13 @@
-/* static/js/theme.js — light/dark toggle. Dark is the default (v1); preference persists. */
+/* static/js/theme.js — light/dark toggle. Light is the default; preference persists. */
 
 (function () {
   const KEY = "educlip-theme";
 
   function isLight() {
     try {
-      return localStorage.getItem(KEY) === "light";
+      return localStorage.getItem(KEY) !== "dark";
     } catch (_) {
-      return false;
+      return true;
     }
   }
 

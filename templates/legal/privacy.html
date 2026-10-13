@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Privacy — EduClip AI{% endblock %}
+{% block content %}
+<article class="max-w-2xl mx-auto py-12 animate-fade-up">
+  <p class="text-xs font-bold tracking-widest text-violet-600 dark:text-violet-400">PRIVACY</p>
+  <h1 class="font-display mt-2 text-3xl font-extrabold tracking-tight text-slate-900 dark:text-gray-100">Privacy Policy</h1>
+  <p class="mt-2 text-sm text-slate-500 dark:text-gray-500">Last updated October 2026.</p>
+  <div class="mt-6 space-y-4 text-slate-600 dark:text-gray-400 leading-relaxed">
+    <p>EduClip turns YouTube links you submit into study material. This page states plainly what we store and why.</p>
+    <h2 class="font-semibold text-slate-900 dark:text-gray-100">What we store</h2>
+    <p>Submitted video URLs and identifiers, generated chapters, summaries, keywords, flashcards, and aggregate analytics — persisted in MongoDB Atlas to serve your dashboard and skip reprocessing repeat submissions.</p>
+    <h2 class="font-semibold text-slate-900 dark:text-gray-100">What we don't store</h2>
+    <p>There are no user accounts, so there are no passwords, emails, or profiles. We never sell data or use it for advertising.</p>
+    <h2 class="font-semibold text-slate-900 dark:text-gray-100">Third parties</h2>
+    <p>Transcripts come from YouTube, AI analysis from your configured LLM provider (OpenAI or Google), and playback embeds the YouTube player — each governed by its own policy.</p>
+    <h2 class="font-semibold text-slate-900 dark:text-gray-100">Deletion</h2>
+    <p>Deleting a video removes its record, flashcards, analytics, and cached transcript segments. Open an issue on <a class="underline underline-offset-2" href="https://github.com/uzi612/EduClip" target="_blank" rel="noopener">GitHub</a> for anything else.</p>
+  </div>
+</article>
+{% endblock %}

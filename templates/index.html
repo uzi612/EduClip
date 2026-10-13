@@ -2,86 +2,233 @@
 {% load static %}
 {% block title %}EduClip AI — Turn any YouTube video into a course{% endblock %}
 
+{% block head %}
+<link rel="stylesheet" href="{% static 'css/landing.css' %}" />
+{% endblock %}
+
 {% block content %}
-<section class="text-center py-16 animate-fade-up">
-  <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-violet-500/30 bg-violet-500/10 text-violet-300 text-sm">
-    ✨ AI-powered video learning
-  </div>
-  <h1 class="mt-6 text-5xl font-extrabold tracking-tight">
-    Turn any <span class="bg-gradient-to-r from-violet-400 to-cyan-400 bg-clip-text text-transparent">YouTube video</span><br />into a course
-  </h1>
-  <p class="mt-4 text-gray-400 max-w-xl mx-auto">Chapters, summaries, flashcards and visual analytics — generated in about a minute.</p>
+<!-- ================= HERO ================= -->
+<section class="landing-hero">
+  <div class="grid lg:grid-cols-2 gap-12 items-center py-12 lg:py-20 animate-fade-up">
+    <!-- Left column -->
+    <div class="text-center lg:text-left">
+      <div class="badge-gradient">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3L12 3Z"/></svg>
+        AI-Powered Learning
+      </div>
+      <h1 class="font-display mt-6 text-4xl sm:text-5xl font-extrabold tracking-tight text-slate-900 dark:text-gray-100">
+        Turn Any YouTube Video Into Your Personal
+        <span class="bg-gradient-to-r from-blue-700 via-indigo-600 to-purple-600 bg-clip-text text-transparent">Learning Assistant</span>
+      </h1>
+      <p class="mt-4 text-slate-600 dark:text-gray-400 max-w-xl mx-auto lg:mx-0 leading-relaxed">
+        Get AI-generated chapter summaries, interactive notes, and smart flashcards — all from a simple YouTube link.
+      </p>
 
-  <form id="intakeForm" class="mt-8 max-w-2xl mx-auto flex gap-2 p-2 rounded-2xl border border-slate-800 bg-slate-900/70" novalidate>
-    <input
-      id="youtubeUrl"
-      name="youtube_url"
-      type="url"
-      required
-      maxlength="500"
-      autocomplete="off"
-      spellcheck="false"
-      placeholder="Paste YouTube URL… (e.g. youtube.com/watch?v=...)"
-      aria-describedby="urlError"
-      class="flex-1 min-w-0 bg-transparent px-4 py-3 outline-none placeholder:text-gray-500"
-    />
-    <button
-      id="submitBtn"
-      type="submit"
-      class="px-6 py-3 rounded-xl font-semibold bg-gradient-to-r from-violet-600 to-cyan-500 hover:opacity-90 transition whitespace-nowrap disabled:opacity-60"
-    >
-      <span id="submitLabel">Analyze →</span>
-      <span id="submitSpinner" class="hidden items-center gap-2">
-        <svg class="animate-spin" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-90" fill="currentColor" d="M4 12a8 8 0 0 1 8-8v4a4 4 0 0 0-4 4H4z"/></svg>
-        Working…
-      </span>
-    </button>
-  </form>
-  <p id="urlError" class="hidden mt-3 text-sm text-red-400 max-w-2xl mx-auto text-left" role="alert"></p>
+      <form id="intakeForm" class="mt-8 max-w-xl mx-auto lg:mx-0" novalidate>
+        <div id="intake" class="landing-input-card">
+          <span class="yt-badge" aria-hidden="true">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="1.5" y="5" width="21" height="14" rx="4" fill="#FF0000"/><path d="M10 9.5v5l4.5-2.5L10 9.5z" fill="#fff"/></svg>
+          </span>
+          <input
+            id="youtubeUrl"
+            name="youtube_url"
+            type="url"
+            required
+            maxlength="500"
+            autocomplete="off"
+            spellcheck="false"
+            placeholder="Paste YouTube URL here..."
+            aria-describedby="urlError"
+            class="landing-input"
+          />
+          <button id="submitBtn" type="submit" class="landing-submit">
+            <span id="submitLabel">→ Generate</span>
+            <span id="submitSpinner" class="hidden items-center gap-2">
+              <svg class="animate-spin" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-90" fill="currentColor" d="M4 12a8 8 0 0 1 8-8v4a4 4 0 0 0-4 4H4z"/></svg>
+              Working…
+            </span>
+          </button>
+        </div>
+      </form>
+      <p id="urlError" class="hidden mt-3 text-sm text-red-500 max-w-xl mx-auto lg:mx-0 text-left" role="alert"></p>
 
-  <div class="mt-4 flex flex-wrap items-center justify-center gap-2 text-sm">
-    <span class="text-gray-500">No link handy? Try:</span>
-    <button type="button" data-demo="https://www.youtube.com/watch?v=aircAruvnKk" class="demo-btn px-3 py-1.5 rounded-full border border-slate-800 bg-slate-900/50 text-gray-400 hover:text-gray-100 hover:border-violet-500/50 transition">🧠 3Blue1Brown · Neural nets</button>
-    <button type="button" data-demo="https://www.youtube.com/watch?v=jNQXAC9IVRw" class="demo-btn px-3 py-1.5 rounded-full border border-slate-800 bg-slate-900/50 text-gray-400 hover:text-gray-100 hover:border-violet-500/50 transition">📼 First YouTube video</button>
-    <button type="button" data-demo="https://www.youtube.com/watch?v=dQw4w9WgXcQ" class="demo-btn px-3 py-1.5 rounded-full border border-slate-800 bg-slate-900/50 text-gray-400 hover:text-gray-100 hover:border-violet-500/50 transition">⚡ Spec sample video</button>
-  </div>
+      <div class="mt-4 flex flex-wrap items-center justify-center lg:justify-start gap-2 text-sm">
+        <span class="text-slate-500 dark:text-gray-500">Try these examples:</span>
+        <button type="button" data-demo="https://www.youtube.com/watch?v=aircAruvnKk" class="demo-chip">3Blue1Brown · Neural nets</button>
+        <button type="button" data-demo="https://www.youtube.com/watch?v=jNQXAC9IVRw" class="demo-chip">First YouTube video</button>
+        <button type="button" data-demo="https://www.youtube.com/watch?v=dQw4w9WgXcQ" class="demo-chip">Spec sample video</button>
+      </div>
 
-  <div id="progressWrap" class="hidden mt-6 max-w-2xl mx-auto" aria-live="polite">
-    <div class="flex justify-between text-sm text-gray-400"><span id="progressLabel">Fetching transcript…</span><span id="progressPct" class="font-mono">5%</span></div>
-    <div class="h-2 mt-2 rounded-full bg-slate-800 overflow-hidden">
-      <div id="progressBar" class="h-full w-0 bg-gradient-to-r from-violet-500 to-cyan-400 transition-all duration-500"></div>
+      <div id="progressWrap" class="hidden mt-6 max-w-xl mx-auto lg:mx-0" aria-live="polite">
+        <div class="flex justify-between text-sm text-slate-500 dark:text-gray-400"><span id="progressLabel">Fetching transcript…</span><span id="progressPct" class="font-mono">5%</span></div>
+        <div class="h-2 mt-2 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden">
+          <div id="progressBar" class="h-full w-0 bg-gradient-to-r from-blue-600 to-purple-600 transition-all duration-500"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right column: floating glass composition -->
+    <div class="hero-visual" aria-hidden="true">
+      <div class="hero-glow"></div>
+      <div class="mock-player">
+        <div class="mock-screen">
+          <span class="mock-play"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4.5v15l13-7.5-13-7.5z"/></svg></span>
+        </div>
+        <div class="mock-playerbar"><span></span><em>13:34</em></div>
+      </div>
+      <div class="mock-card mock-chapters">
+        <p class="mock-title">AI Chapters</p>
+        <ul>
+          <li><span>Introduction</span><em>0:00-3:15</em></li>
+          <li><span>Variables &amp; Data Types</span><em>3:15-8:30</em></li>
+          <li><span>Control Flow</span><em>8:30-13:34</em></li>
+        </ul>
+      </div>
+      <div class="mock-card mock-flash">
+        <p class="mock-title">Flashcards</p>
+        <p class="mock-q">Q: What is Python?</p>
+        <p class="mock-a">A high-level, readable programming language.</p>
+      </div>
     </div>
   </div>
 </section>
 
-<section id="how-it-works" class="grid sm:grid-cols-3 gap-4 mt-4 text-left">
-  <div class="rounded-2xl border border-slate-800 bg-slate-900/70 p-6">
-    <div class="text-2xl">🔗</div>
-    <h2 class="mt-2 font-semibold">1. Paste a link</h2>
-    <p class="mt-1 text-sm text-gray-400">Any public YouTube video — lectures, talks, tutorials.</p>
+<!-- ================= FEATURES ================= -->
+<section id="features" class="mt-8 scroll-mt-20" aria-label="Features">
+  <div class="text-center max-w-xl mx-auto">
+    <h2 class="font-display text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-gray-100">Everything you need to learn faster</h2>
+    <p class="mt-2 text-slate-600 dark:text-gray-400">One link in, a full interactive course out.</p>
   </div>
-  <div class="rounded-2xl border border-slate-800 bg-slate-900/70 p-6">
-    <div class="text-2xl">🧠</div>
-    <h2 class="mt-2 font-semibold">2. AI analyzes it</h2>
-    <p class="mt-1 text-sm text-gray-400">Chapters, summary, keywords and flashcards in about a minute.</p>
-  </div>
-  <div class="rounded-2xl border border-slate-800 bg-slate-900/70 p-6">
-    <div class="text-2xl">🎓</div>
-    <h2 class="mt-2 font-semibold">3. Learn interactively</h2>
-    <p class="mt-1 text-sm text-gray-400">Jump to chapters, flip flashcards, explore visual analytics.</p>
+  <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-8 text-left">
+    <div class="feature-card">
+      <span class="feature-badge badge-blue">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+      </span>
+      <h3 class="mt-3 font-semibold text-slate-900 dark:text-gray-100">AI Chapters</h3>
+      <p class="mt-1 text-sm text-slate-600 dark:text-gray-400">Get structured chapter breakdowns with key timestamps.</p>
+    </div>
+    <div class="feature-card">
+      <span class="feature-badge badge-violet">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>
+      </span>
+      <h3 class="mt-3 font-semibold text-slate-900 dark:text-gray-100">Smart Notes</h3>
+      <p class="mt-1 text-sm text-slate-600 dark:text-gray-400">View concise summaries for each section.</p>
+    </div>
+    <div class="feature-card">
+      <span class="feature-badge badge-rose">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>
+      </span>
+      <h3 class="mt-3 font-semibold text-slate-900 dark:text-gray-100">Interactive Flashcards</h3>
+      <p class="mt-1 text-sm text-slate-600 dark:text-gray-400">Revisit with AI-generated flashcards.</p>
+    </div>
+    <div class="feature-card">
+      <span class="feature-badge badge-emerald">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="5 4 15 12 5 20 5 4"/><line x1="19" x2="19" y1="5" y2="19"/></svg>
+      </span>
+      <h3 class="mt-3 font-semibold text-slate-900 dark:text-gray-100">One-Click Jump</h3>
+      <p class="mt-1 text-sm text-slate-600 dark:text-gray-400">Skip to any chapter instantly.</p>
+    </div>
   </div>
 </section>
 
+<!-- ================= HOW IT WORKS ================= -->
+<section id="how-it-works" class="grid sm:grid-cols-3 gap-4 mt-12 text-left scroll-mt-20" aria-label="How it works">
+  <div class="feature-card">
+    <span class="feature-badge badge-blue">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+    </span>
+    <h2 class="mt-3 font-semibold text-slate-900 dark:text-gray-100">1. Paste a link</h2>
+    <p class="mt-1 text-sm text-slate-600 dark:text-gray-400">Any public YouTube video — lectures, talks, tutorials.</p>
+  </div>
+  <div class="feature-card">
+    <span class="feature-badge badge-violet">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3L12 3Z"/></svg>
+    </span>
+    <h2 class="mt-3 font-semibold text-slate-900 dark:text-gray-100">2. AI analyzes it</h2>
+    <p class="mt-1 text-sm text-slate-600 dark:text-gray-400">Chapters, summary, keywords and flashcards in about a minute.</p>
+  </div>
+  <div class="feature-card">
+    <span class="feature-badge badge-emerald">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.42 10.922a1 1 0 0 0-.019-1.838L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.832l8.57 3.908a2 2 0 0 0 1.66 0z"/><path d="M22 10v6"/><path d="M6 12.5V16a6 6 0 0 0 12 0v-3.5"/></svg>
+    </span>
+    <h2 class="mt-3 font-semibold text-slate-900 dark:text-gray-100">3. Learn interactively</h2>
+    <p class="mt-1 text-sm text-slate-600 dark:text-gray-400">Jump to chapters, flip flashcards, explore visual analytics.</p>
+  </div>
+</section>
+
+<!-- ================= PRICING ================= -->
+<section id="pricing" class="mt-16 scroll-mt-20" aria-label="Pricing">
+  <div class="text-center max-w-xl mx-auto">
+    <p class="text-xs font-bold tracking-widest text-violet-600 dark:text-violet-400">PRICING</p>
+    <h2 class="font-display mt-2 text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-gray-100">Start free, upgrade when ready</h2>
+  </div>
+  <div class="grid sm:grid-cols-3 gap-4 mt-8 text-left">
+    <div class="feature-card">
+      <h3 class="font-semibold text-slate-900 dark:text-gray-100">Starter</h3>
+      <p class="mt-1 text-3xl font-extrabold text-slate-900 dark:text-gray-100">$0</p>
+      <p class="mt-2 text-sm text-slate-600 dark:text-gray-400">5 videos a month, chapters + flashcards.</p>
+    </div>
+    <div class="feature-card pricing-highlight">
+      <h3 class="font-semibold text-slate-900 dark:text-gray-100">Pro</h3>
+      <p class="mt-1 text-3xl font-extrabold text-slate-900 dark:text-gray-100">$9<span class="text-base font-medium text-slate-500">/mo</span></p>
+      <p class="mt-2 text-sm text-slate-600 dark:text-gray-400">Unlimited videos, analytics, exports.</p>
+    </div>
+    <div class="feature-card">
+      <h3 class="font-semibold text-slate-900 dark:text-gray-100">Team</h3>
+      <p class="mt-1 text-3xl font-extrabold text-slate-900 dark:text-gray-100">$29<span class="text-base font-medium text-slate-500">/mo</span></p>
+      <p class="mt-2 text-sm text-slate-600 dark:text-gray-400">Shared workspaces and classrooms.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ================= CTA BANNER ================= -->
+<section class="cta-banner mt-16" aria-label="Get started">
+  <div class="grid lg:grid-cols-2 gap-8 items-center">
+    <div class="text-center lg:text-left">
+      <p class="text-xs font-bold tracking-widest text-blue-600 dark:text-cyan-400">LEARN SMARTER</p>
+      <h2 class="font-display mt-2 text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-gray-100">Build better learning habits</h2>
+      <p class="mt-3 text-slate-600 dark:text-gray-400">Turn passive watching into active study. Chapters, notes, and flashcards from every video you already watch.</p>
+      <div class="mt-6 flex flex-wrap justify-center lg:justify-start gap-3">
+        <a href="/#intake" class="btn-primary">Get Started →</a>
+        <a href="https://www.youtube.com/watch?v=aircAruvnKk" target="_blank" rel="noopener" class="btn-ghost">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4.5v15l13-7.5-13-7.5z"/></svg>
+          Watch Demo
+        </a>
+      </div>
+    </div>
+    <div class="laptop" aria-hidden="true">
+      <div class="laptop-screen">
+        <div class="laptop-bar"><span></span><span></span><span></span></div>
+        <div class="laptop-body">
+          <div class="laptop-player"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4.5v15l13-7.5-13-7.5z"/></svg></div>
+          <div class="laptop-rows"><span></span><span></span><span></span></div>
+          <div class="laptop-chart"><i></i><i></i><i></i><i></i><i></i></div>
+        </div>
+      </div>
+      <div class="laptop-base"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= ABOUT ================= -->
+<section id="about" class="mt-16 scroll-mt-20 rounded-3xl border border-slate-200 dark:border-slate-800 bg-white/70 dark:bg-slate-900/50 p-8 text-center" aria-label="About">
+  <h2 class="font-display text-xl font-extrabold tracking-tight text-slate-900 dark:text-gray-100">About EduClip</h2>
+  <p class="mt-2 text-sm text-slate-600 dark:text-gray-400 max-w-2xl mx-auto">EduClip is an open-source study companion: paste a YouTube link and get chapters, summaries, flashcards, and visual analytics. Built with Django, MongoDB Atlas, Tailwind CSS, and Chart.js.</p>
+</section>
+
+<!-- ================= RECENT ================= -->
 <section class="mt-12" aria-label="Recent videos">
   <div class="flex items-center justify-between">
-    <h2 class="text-lg font-bold tracking-tight">Recent videos</h2>
-    <span id="recentCount" class="text-xs font-mono text-gray-500"></span>
+    <h2 class="font-display text-lg font-bold tracking-tight text-slate-900 dark:text-gray-100">Recent videos</h2>
+    <span id="recentCount" class="text-xs font-mono text-slate-500 dark:text-gray-500"></span>
   </div>
   <div id="recentGrid" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-4"></div>
-  <div id="recentEmpty" class="hidden mt-4 rounded-2xl border border-dashed border-slate-800 p-10 text-center">
-    <div class="text-3xl">🎬</div>
-    <p class="mt-3 font-semibold">No videos yet</p>
-    <p class="mt-1 text-sm text-gray-400">Paste a YouTube URL above — it will show up here once processed.</p>
+  <div id="recentEmpty" class="hidden mt-4 rounded-2xl border border-dashed border-slate-300 dark:border-slate-800 p-10 text-center">
+    <div class="empty-icon">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="6" width="13" height="12" rx="2"/><path d="m22 8-6 4 6 4V8Z"/></svg>
+    </div>
+    <p class="mt-3 font-semibold text-slate-900 dark:text-gray-100">No videos yet</p>
+    <p class="mt-1 text-sm text-slate-600 dark:text-gray-400">Paste a YouTube URL above — it will show up here once processed.</p>
   </div>
 </section>
 {% endblock %}
