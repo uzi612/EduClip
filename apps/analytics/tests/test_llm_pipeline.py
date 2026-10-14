@@ -36,6 +36,15 @@ CANNED = {
         {"front": "   ", "back": "Empty front dropped.", "timestamp_sec": 10},
         {"front": "Where does fixation happen?", "back": "Stroma.", "timestamp_sec": "bad"},
     ],
+    "mcqs": [
+        {"question": "What captures light?",
+         "options": ["Chlorophyll", "Water", "Oxygen", "Soil"],
+         "answer_index": 0, "explanation": "Chlorophyll absorbs photons.", "timestamp_sec": 45},
+        {"question": "Too few options?", "options": ["Only", "Two"],
+         "answer_index": 0, "explanation": "Dropped: needs 4 options.", "timestamp_sec": 10},
+        {"question": "Bad index?", "options": ["A", "B", "C", "D"],
+         "answer_index": 9, "explanation": "Dropped: index out of range.", "timestamp_sec": 10},
+    ],
 }
 
 fake_openai = types.ModuleType("openai")
@@ -133,6 +142,7 @@ def test_run_analysis_full_path():
     assert out["chapters"][-1]["end_sec"] == 842
     assert len(out["flashcards"]) == 2  # empty-front card dropped
     assert out["flashcards"][0]["timestamp_sec"] == 45
+    assert len(out["mcqs"]) == 1 and out["mcqs"][0]["answer_index"] == 0  # bad ones dropped
     assert out["stats"]["word_count"] > 0 and out["complexity"]["type_token_ratio"] > 0
 
 

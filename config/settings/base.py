@@ -20,6 +20,7 @@ INSTALLED_APPS = [
     "apps.videos",
     "apps.analytics",
     "apps.flashcards",
+    "apps.quiz",
     "apps.api_v1",
 ]
 

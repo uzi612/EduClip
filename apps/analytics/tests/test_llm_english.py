@@ -39,7 +39,9 @@ def test_openai_system_message_keeps_constraint():
             canned = {"summary": "English summary.",
                       "chapters": [{"title": "Intro", "start_sec": 0, "end_sec": 600,
                                     "summary": ""}],
-                      "keywords": [], "flashcards": []}
+                      "keywords": [], "flashcards": [],
+                     "mcqs": [{"question": "Q?", "options": ["A", "B", "C", "D"],
+                               "answer_index": 1, "explanation": "E.", "timestamp_sec": 2}]}
             msg = types.SimpleNamespace(content=json.dumps(canned))
             return types.SimpleNamespace(choices=[types.SimpleNamespace(message=msg)])
 
@@ -85,7 +87,9 @@ def test_gemini_instruction_keeps_constraint():
             canned = {"summary": "English summary.",
                       "chapters": [{"title": "Intro", "start_sec": 0, "end_sec": 600,
                                     "summary": ""}],
-                      "keywords": [], "flashcards": []}
+                      "keywords": [], "flashcards": [],
+                     "mcqs": [{"question": "Q?", "options": ["A", "B", "C", "D"],
+                               "answer_index": 1, "explanation": "E.", "timestamp_sec": 2}]}
             return types.SimpleNamespace(text=json.dumps(canned))
 
     module.GenerativeModel = _Model
@@ -111,7 +115,9 @@ def test_parsers_do_not_touch_prompt_contract():
 
     good = {"summary": "S",
             "chapters": [{"title": "A", "start_sec": 0, "end_sec": 5, "summary": ""}],
-            "keywords": [], "flashcards": []}
+            "keywords": [], "flashcards": [],
+                     "mcqs": [{"question": "Q?", "options": ["A", "B", "C", "D"],
+                               "answer_index": 1, "explanation": "E.", "timestamp_sec": 2}]}
     assert llm_client._validate_shape(dict(good))["summary"] == "S"
     try:
         llm_client._validate_shape({"summary": "S"})

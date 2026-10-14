@@ -41,6 +41,14 @@ timestamps, return STRICT JSON with exactly these keys:
 - keywords: [{"term": str, "score": float 0-1}] (5-10 key domain terms).
 - flashcards: 8-12 items [{"front": str (question, <=140 chars),
   "back": str (answer, <=300 chars), "timestamp_sec": int}].
+  Ask at least 5 content-grounded questions (no generic filler like "What is
+  the main idea?"); every card must be answerable from the transcript.
+- mcqs: 4-5 items [{"question": str (<=200 chars),
+  "options": [exactly 4 answer strings, each <=200 chars],
+  "answer_index": int 0-3 pointing at the single correct option,
+  "explanation": str (<=500 chars, why the answer is right),
+  "timestamp_sec": int}]. Distractors must be plausible but clearly wrong
+  given the video; vary the correct position across questions.
 Return JSON only, no markdown fences.
 CRITICAL CONSTRAINT: You must generate all summaries, titles, chapter breakdowns, key terms, flashcards, and notes strictly in English, regardless of the input language of the video transcript."""
 
@@ -175,12 +183,35 @@ def _call_gemini(transcript, title):
 def _validate_shape(payload):
     if not isinstance(payload, dict):
         raise LLMError("LLM payload is not a JSON object.", retryable=False)
-    for key in ("summary", "chapters", "keywords", "flashcards"):
+    for key in ("summary", "chapters", "keywords", "flashcards", "mcqs"):
         if key not in payload:
             raise LLMError(f"LLM payload missing key: {key}.", retryable=False)
     if not isinstance(payload["chapters"], list) or not payload["chapters"]:
         raise LLMError("LLM payload has no chapters.", retryable=False)
+    if not isinstance(payload.get("mcqs"), list) or not payload["mcqs"]:
+        raise LLMError("LLM payload has no mcqs.", retryable=False)
     return payload
+
+
+def clean_mcq(item):
+    """Validate one raw MCQ dict. Returns a clean dict or None to drop it."""
+    if not isinstance(item, dict):
+        return None
+    question = " ".join(str(item.get("question", "")).split())[:200]
+    options = [" ".join(str(o).split())[:200] for o in (item.get("options") or [])]
+    options = [o for o in options if o][:4]
+    explanation = " ".join(str(item.get("explanation", "")).split())[:500]
+    try:
+        answer = int(item.get("answer_index", -1))
+        ts = max(0, int(float(item.get("timestamp_sec", 0))))
+    except (TypeError, ValueError):
+        return None
+    if not question or len(options) != 4 or not explanation:
+        return None
+    if answer not in (0, 1, 2, 3):
+        return None
+    return {"question": question, "options": options, "answer_index": answer,
+            "explanation": explanation, "timestamp_sec": ts}
 
 
 def analyze_video(segments, title, provider=None, use_cache=True):

@@ -84,7 +84,9 @@ def test_pipeline_paths_include_valid_graphs():
     raw = {"summary": "S",
            "chapters": [{"title": "A", "start_sec": 0, "end_sec": 600, "summary": ""}],
            "keywords": [{"term": "chlorophyll", "score": 0.9}],
-           "flashcards": [{"front": "Q?", "back": "A.", "timestamp_sec": 5}]}
+           "flashcards": [{"front": "Q?", "back": "A.", "timestamp_sec": 5}],
+           "mcqs": [{"question": "What captures light?", "options": ["Chlorophyll", "Water", "Oxygen", "Soil"],
+                     "answer_index": 0, "explanation": "Chlorophyll absorbs photons.", "timestamp_sec": 5}]}
     with patch.object(llm_client, "analyze_video", return_value=dict(raw)):
         out = pipeline.run_analysis(SEGS, "T", 600)
     assert out["degraded"] is False
@@ -130,6 +132,8 @@ ANALYSIS = {
                   "summary": "", "keyword_refs": []}],
     "keywords": [{"term": "chlorophyll", "score": 0.9, "count": 3}],
     "flashcards": [{"front": "Q?", "back": "A.", "timestamp_sec": 5}],
+    "mcqs": [{"question": "What captures light?", "options": ["Chlorophyll", "Water", "Oxygen", "Soil"],
+              "answer_index": 0, "explanation": "Chlorophyll absorbs photons.", "timestamp_sec": 5}],
     "stats": {"word_count": 12, "reading_minutes": 1, "avg_words_per_min": 12,
               "top_keywords": ["chlorophyll"]},
     "complexity": {"type_token_ratio": 0.5, "avg_words_per_sentence": 4.0,

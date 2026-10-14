@@ -51,6 +51,7 @@ def process_video_task(self, video_id):
         logger.info("task analyzing: task_id=%s video_id=%s", task_id, video_id)
         result = run_analysis(segments, video.title, video.duration_sec)
         cards = result.get("flashcards", [])[:20]
+        questions = result.get("mcqs", [])[:8]
         video.update(
             set__summary=result.get("summary", ""),
             set__chapters=[
@@ -64,6 +65,7 @@ def process_video_task(self, video_id):
                 for k in result.get("keywords", [])
             ],
             set__flashcard_count=len(cards),
+            set__mcq_count=len(questions),
             set__degraded=bool(result.get("degraded", False)),
             set__status="ready",
             set__progress=1.0,
@@ -72,6 +74,14 @@ def process_video_task(self, video_id):
         for card in cards:
             Flashcard(video_id=video, front=card["front"], back=card["back"],
                       timestamp_sec=card.get("timestamp_sec", 0)).save()
+        from apps.quiz.models import MCQ
+
+        MCQ.objects(video_id=video).delete()
+        for question in questions:
+            MCQ(video_id=video, question=question["question"],
+                options=question["options"], answer_index=question["answer_index"],
+                explanation=question["explanation"],
+                timestamp_sec=question.get("timestamp_sec", 0)).save()
         from apps.analytics.models import Analytics
 
         Analytics.objects(video_id=video).update_one(
