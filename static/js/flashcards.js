@@ -120,7 +120,7 @@
     bar.classList.remove("hidden");
     var total = quiz.order.length;
     if (score) score.textContent = quiz.got + " correct · " + quiz.missed + " missed · Q " +
-      Math.min(quiz.pos + 1, total) + " / " + total;
+      Math.min(quiz.pos + 1, total) + " / " + total + bestSuffix();
     var counter = $("flashCounter");
     if (counter) counter.textContent = "Quiz " + Math.min(quiz.pos + 1, total) + " / " + total;
   }
@@ -181,17 +181,61 @@
     render();
   }
 
+  function videoIdFromPath() {
+    var m = window.location.pathname.match(/^\/watch\/([^/]+)\/?$/);
+    return m ? decodeURIComponent(m[1]) : "home";
+  }
+
+  function bestKey() {
+    return "educlip-quiz-best-" + videoIdFromPath();
+  }
+
+  function readBest() {
+    try {
+      var raw = localStorage.getItem(bestKey());
+      if (!raw) return null;
+      var parsed = JSON.parse(raw);
+      if (typeof parsed.got === "number" && typeof parsed.total === "number") return parsed;
+    } catch (_) {
+      /* corrupted entry counts as none */
+    }
+    return null;
+  }
+
+  function finishQuiz() {
+    var total = quiz.order.length;
+    var best = readBest();
+    var isBest = !best || quiz.got > best.got;
+    if (isBest) {
+      try {
+        localStorage.setItem(bestKey(), JSON.stringify({ got: quiz.got, total: total }));
+      } catch (_) {
+        /* private mode: session-only */
+      }
+    }
+    paintQuizBar();
+    if (typeof showToast === "function") {
+      showToast(
+        "Quiz done: " + quiz.got + " correct, " + quiz.missed + " missed." +
+        (isBest && total > 0 ? " New best!" : ""),
+        "success"
+      );
+    }
+    exitQuiz();
+  }
+
+  function bestSuffix() {
+    var best = readBest();
+    return best ? " · Best " + best.got + "/" + best.total : "";
+  }
+
   function answerQuiz(ok) {
     if (!quiz) return;
     if (ok) quiz.got++;
     else quiz.missed++;
     quiz.pos++;
     if (quiz.pos >= quiz.order.length) {
-      paintQuizBar();
-      if (typeof showToast === "function") {
-        showToast("Quiz done: " + quiz.got + " correct, " + quiz.missed + " missed.", "success");
-      }
-      exitQuiz();
+      finishQuiz();
       return;
     }
     render();
@@ -264,6 +308,7 @@
   function shuffle() {
     if (quiz) {
       enterQuiz(); // re-deal the quiz order
+      if (typeof showToast === "function") showToast("Quiz re-dealt.", "info");
       return;
     }
     for (var i = cards.length - 1; i > 0; i--) {
@@ -280,8 +325,14 @@
 
   function step(d) {
     if (quiz) {
-      // Arrow keys skip without scoring in quiz mode.
-      quiz.pos = (quiz.pos + d + quiz.order.length) % quiz.order.length;
+      // Arrow keys skip without scoring; moving past the last card finishes
+      // the run instead of looping forever.
+      var next = quiz.pos + d;
+      if (next >= quiz.order.length || next < 0) {
+        finishQuiz();
+        return;
+      }
+      quiz.pos = next;
       render();
       focusCurrent(true);
       return;
@@ -351,6 +402,7 @@
         mode.textContent = "Quiz mode";
         mode.setAttribute("aria-pressed", "false");
       }
+      if (typeof showToast === "function") showToast("Quiz ended — difficulty filter changed.", "info");
     }
     render();
     focusCurrent(false);

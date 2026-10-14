@@ -51,6 +51,55 @@
   }
 }
 
+/* Executive summary clamp: 5 lines, toggle in player.js removes the class */
+#summaryBody.summary-clamped {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 5;
+  overflow: hidden;
+}
+
+/* Print/PDF export: white paper, chrome suppressed, cards flattened */
+@media print {
+  header,
+  footer,
+  #toastWrap,
+  #chapterToast,
+  .sticky.top-16,
+  #diffFilters,
+  #quizBar,
+  #deckMode,
+  #flashPrev,
+  #flashNext,
+  #flashShuffle,
+  #flashEmpty,
+  .chapter-toggle,
+  #scratchStamp,
+  #exportMd,
+  #exportPrint,
+  #scratchSaved {
+    display: none !important;
+  }
+  body,
+  html.dark body {
+    background: #fff !important;
+    color: #111 !important;
+  }
+  .flash-scene {
+    break-inside: avoid;
+  }
+  .flash-face {
+    position: static !important;
+    transform: none !important;
+  }
+  .flash-face.flash-back {
+    border-top: 1px dashed #999 !important;
+  }
+  main {
+    max-width: 100% !important;
+  }
+}
+
 /* Rich text (rendered from LLM summaries/answers): code + math styling */
 .rich-text .rich-code {
   margin: 0.5rem 0;

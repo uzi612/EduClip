@@ -145,6 +145,12 @@
     if (md) {
       md.addEventListener("click", function () {
         var v = currentVideo() || {};
+        if (v.status && v.status !== "ready") {
+          if (typeof showToast === "function") {
+            showToast("Not ready yet — export unlocks once processing finishes.", "info");
+          }
+          return;
+        }
         var slug = String(v.title || "educlip-notes").toLowerCase()
           .replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60) || "educlip-notes";
         download(slug + ".md", studyMarkdown(), "text/markdown;charset=utf-8");
