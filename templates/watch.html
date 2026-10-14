@@ -27,13 +27,18 @@
 
   </div>
 
+  <div id="ambientGlow" class="ambient-glow" aria-hidden="true"></div>
   <div class="grid lg:grid-cols-3 gap-6 mt-6">
     <div class="lg:col-span-2">
       <div class="sticky top-16 z-10 rounded-2xl overflow-hidden border border-slate-800 bg-black aspect-video relative">
         <div id="player" class="absolute inset-0"></div>
         <div id="chapterToast" class="absolute bottom-4 left-4 px-3 py-1.5 rounded-lg bg-black/70 text-sm hidden" aria-live="polite"></div>
       </div>
-      <p class="mt-3 text-xs text-gray-500">Tip: click any timestamp to jump the player.</p>
+      <div id="waveWrap" class="hidden mt-3 rounded-xl border border-slate-800 bg-slate-900/50 px-3 pt-2 pb-1">
+        <div id="waveBar" class="wave-bar" role="slider" aria-label="Attention timeline. Arrow keys seek." tabindex="0" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"></div>
+        <p class="mt-1 text-[11px] text-gray-500">Attention curve — click to seek, ticks mark chapters.</p>
+      </div>
+      <p class="mt-3 text-xs text-gray-500">Tip: click any timestamp to jump the player. Press <kbd>?</kbd> for shortcuts.</p>
     </div>
     <aside class="space-y-3" aria-label="Chapters">
       <div class="flex items-center justify-between">
@@ -96,12 +101,11 @@
     </div>
     <div class="rounded-2xl border border-slate-800 bg-slate-900/50 p-4 sm:p-6">
       <h2 class="text-lg font-bold tracking-tight">Export study pack</h2>
-      <p class="mt-1 text-sm text-gray-400">Summary, chapters, flashcards, and keywords for this video.</p>
+      <p class="mt-1 text-sm text-gray-400">Summary, chapters, flashcards, quiz, and notes for this video.</p>
       <div class="mt-4 flex flex-wrap gap-2">
-        <button id="exportMd" type="button" class="px-4 py-2 rounded-xl text-sm font-semibold bg-gradient-to-r from-violet-600 to-cyan-500 hover:opacity-90 transition">⤓ Markdown</button>
-        <button id="exportPrint" type="button" class="px-4 py-2 rounded-xl text-sm border border-slate-700 text-gray-300 hover:text-white hover:border-violet-500/50 transition">⎙ Print / PDF</button>
+        <button id="exportOpen" type="button" class="px-4 py-2 rounded-xl text-sm font-semibold bg-gradient-to-r from-violet-600 to-cyan-500 hover:opacity-90 transition">⤓ Export…</button>
       </div>
-      <p class="mt-3 text-xs text-gray-500">Markdown downloads a .md file; Print opens the print dialog (save as PDF).</p>
+      <p class="mt-3 text-xs text-gray-500">Markdown, plain text, or print dialog (save as PDF).</p>
     </div>
   </section>
 </div>
@@ -110,6 +114,8 @@
 {% block scripts %}
 <script src="{% static 'js/player.js' %}"></script>
 <script src="{% static 'js/flashcards.js' %}"></script>
+<script src="{% static 'js/waveform.js' %}"></script>
+<script src="{% static 'js/hotkeys.js' %}"></script>
 <script src="{% static 'js/mcq.js' %}"></script>
 <script src="{% static 'js/notes.js' %}"></script>
 {% endblock %}

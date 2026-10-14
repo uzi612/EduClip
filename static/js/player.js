@@ -432,6 +432,19 @@
     if (typeof window.renderCharts === "function") {
       window.renderCharts(data.graphs, data.video_id);
     }
+    if (typeof window.renderWaveform === "function") {
+      window.renderWaveform(data.graphs, data.video_id, data.duration_sec);
+    }
+    // Ambient tint: blurred thumbnail glow behind the top section.
+    var glow = document.getElementById("ambientGlow");
+    if (glow) {
+      if (data.thumbnail) {
+        glow.style.backgroundImage =
+          "url('" + String(data.thumbnail).replace(/'/g, "%27") + "')";
+      } else {
+        glow.style.backgroundImage = "none";
+      }
+    }
     window.EDUCLIP.youtubeId = data.youtube_id;
     initPlayer();
     if (data.flashcards === undefined && typeof window.renderFlashcards === "function") {
