@@ -26,7 +26,23 @@
   justify-content: center;
   padding: 1.5rem;
   border-radius: 1rem;
-  border: 1px solid #1e293b;
+  border: 1px solid #1e2640;
+  letter-spacing: 0.002em;
+}
+
+.flash-face p,
+.flash-face .rich-text {
+  line-height: 1.65;
+}
+
+/* Keyboard focus + flipped-state indicator */
+.flash-scene:focus-visible {
+  outline: 2px solid #8b5cf6;
+  outline-offset: 3px;
+  border-radius: 1rem;
+}
+.flash-scene.flipped .flash-inner {
+  filter: drop-shadow(0 14px 28px rgba(124, 58, 237, 0.22));
 }
 
 .flash-front {
