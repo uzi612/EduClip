@@ -9,8 +9,8 @@
 
   var LABELS = {
     queued: "Queued…",
-    processing: "Fetching transcript…",
-    analyzing: "Analyzing with AI…",
+    processing: "Extracting transcript…",
+    analyzing: "Analyzing with Gemini AI…",
     ready: "Ready!",
   };
 

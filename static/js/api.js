@@ -17,7 +17,9 @@ class ApiError extends Error {
 
 const api = {
   base: "/api/v1",
-  timeoutMs: 30000,
+  // 60s per-request ceiling: ingestion responses can trail while the worker
+  // finishes Gemini generation; polling (below) owns overall progress.
+  timeoutMs: 60000,
   maxRetries: 2, // retries for transient failures (network / 5xx / timeout)
   pollIntervalMs: 3000,
   pollTimeoutMs: 5 * 60 * 1000, // 5-minute polling timeout

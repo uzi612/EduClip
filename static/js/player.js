@@ -129,14 +129,27 @@
         }
         setRowOpen(rows[j], active); // auto-expand the active chapter (single-open)
       }
+      // Toast only when the player is scrolled out of view; otherwise the
+      // ring highlight + auto-expand already signal the chapter change.
       var toast = $("chapterToast");
       if (toast) {
-        toast.textContent = "\uD83D\uDCD6 " + chapters[idx].title;
-        toast.classList.remove("hidden");
-        clearTimeout(toast._t);
-        toast._t = setTimeout(function () {
+        var pastPlayer = false;
+        try {
+          var rect = document.querySelector("#watchWrap .aspect-video").getBoundingClientRect();
+          pastPlayer = rect.bottom < 0;
+        } catch (_) {
+          pastPlayer = window.scrollY > window.innerHeight * 0.6;
+        }
+        if (pastPlayer) {
+          toast.textContent = "\uD83D\uDCD6 " + chapters[idx].title;
+          toast.classList.remove("hidden");
+          clearTimeout(toast._t);
+          toast._t = setTimeout(function () {
+            toast.classList.add("hidden");
+          }, 2500);
+        } else {
           toast.classList.add("hidden");
-        }, 2500);
+        }
       }
     }
   }
@@ -267,6 +280,47 @@
     }
   }
 
+  // Executive summary with a 5-line clamp (.summary-clamped in chapters.css):
+  // long briefs no longer shove the chapters a viewport down. Toggle
+  // expands/collapses in place, and only appears when text overflows.
+  window.renderSummary = function (v) {
+    var card = $("summaryCard");
+    var body = $("summaryBody");
+    if (!card || !body) return;
+    var oldToggle = $("summaryToggle");
+    if (oldToggle) oldToggle.remove();
+    if (!(v && v.summary)) {
+      card.classList.add("hidden");
+      return;
+    }
+    body.innerHTML = RT(v.summary);
+    card.classList.remove("hidden");
+    body.classList.add("summary-clamped");
+    var toggle = document.createElement("button");
+    toggle.type = "button";
+    toggle.id = "summaryToggle";
+    toggle.setAttribute("aria-expanded", "false");
+    toggle.className = "mt-3 text-xs font-semibold text-violet-300 hover:text-violet-200 transition";
+    toggle.textContent = "Show more";
+    toggle.addEventListener("click", function () {
+      var clamped = body.classList.toggle("summary-clamped");
+      toggle.textContent = clamped ? "Show more" : "Show less";
+      toggle.setAttribute("aria-expanded", String(!clamped));
+    });
+    // Only offer the toggle when the text actually overflows the clamp.
+    if (typeof requestAnimationFrame === "function") {
+      requestAnimationFrame(function () {
+        if (body.scrollHeight > body.clientHeight + 4) {
+          body.after(toggle);
+        } else {
+          body.classList.remove("summary-clamped");
+        }
+      });
+    } else {
+      body.after(toggle);
+    }
+  };
+
   function renderHeader(v) {
     var title = $("videoTitle");
     var meta = $("videoMeta");
@@ -304,6 +358,8 @@
       err.classList.remove("hidden");
       var m = $("pageErrorMsg");
       if (m && msg) m.textContent = msg;
+      var btn = $("retryBtn");
+      if (btn) btn.disabled = false;
     }
     if (wrap) wrap.classList.add("hidden");
   }
@@ -329,7 +385,43 @@
     list.innerHTML = skeletonHTML();
     fetchVideo();
     var retry = $("retryBtn");
-    if (retry) retry.addEventListener("click", fetchVideo);
+    if (retry) retry.addEventListener("click", resubmitVideo);
+  }
+
+  // Retry restarts the pipeline (POST), not just the status read (GET):
+  // re-fetching a failed video can only ever return the same failure.
+  function resubmitVideo() {
+    hideFatal();
+    var yid = window.EDUCLIP && window.EDUClip.youtubeId;
+    if (!yid) {
+      fetchVideo();
+      return;
+    }
+    var btn = $("retryBtn");
+    if (btn) btn.disabled = true;
+    listSkeletonAndPoll("https://www.youtube.com/watch?v=" + yid);
+  }
+
+  function listSkeletonAndPoll(url) {
+    var list = $("chapterList");
+    if (list) list.innerHTML = skeletonHTML();
+    api
+      .post("/process-video", { youtube_url: url })
+      .then(function (data) {
+        if (!data) return;
+        if (data.status === "ready") {
+          fetchVideo();
+          return;
+        }
+        return api.pollVideo(data.video_id, {}).then(function () {
+          fetchVideo();
+        });
+      })
+      .catch(function (err) {
+        showFatal((err && err.message) || "Could not restart processing.");
+        var btn = $("retryBtn");
+        if (btn) btn.disabled = false;
+      });
   }
 
   function hydrate(data) {

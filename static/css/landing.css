@@ -115,26 +115,34 @@ html.dark .empty-icon {
   background: rgba(139, 92, 246, 0.12);
 }
 
-/* ---------- hero backdrop ---------- */
+/* ---------- hero backdrop: full-bleed multi-stop glow ---------- */
 .landing-hero {
   position: relative;
   isolation: isolate;
 }
-.landing-hero::before {
-  content: "";
+/* Viewport-wide layer (breaks out of the max-w-7xl main column) so the
+   lavender -> cyan -> peach fade spans corner to corner, top to bottom. */
+.landing-bleed {
   position: absolute;
-  inset: -2rem 0 auto 0;
-  height: 34rem;
+  top: -4rem;
+  bottom: -6rem;
+  width: 100vw;
+  left: 50%;
+  transform: translateX(-50%);
   z-index: -1;
+  pointer-events: none;
   background:
-    radial-gradient(32rem 20rem at 12% 8%, rgba(59, 130, 246, 0.14), transparent 60%),
-    radial-gradient(36rem 22rem at 88% 12%, rgba(168, 85, 247, 0.16), transparent 60%),
-    radial-gradient(24rem 16rem at 55% 90%, rgba(34, 211, 238, 0.1), transparent 60%);
+    radial-gradient(44rem 28rem at 8% 0%, rgba(196, 181, 253, 0.35), transparent 62%),
+    radial-gradient(40rem 26rem at 96% 18%, rgba(103, 232, 249, 0.28), transparent 60%),
+    radial-gradient(48rem 30rem at 78% 96%, rgba(253, 186, 168, 0.3), transparent 64%),
+    radial-gradient(36rem 24rem at 30% 70%, rgba(165, 180, 252, 0.2), transparent 60%),
+    linear-gradient(180deg, rgba(248, 250, 252, 0.4), rgba(255, 255, 255, 0) 40%);
 }
-html.dark .landing-hero::before {
+html.dark .landing-bleed {
   background:
-    radial-gradient(32rem 20rem at 12% 8%, rgba(139, 92, 246, 0.12), transparent 60%),
-    radial-gradient(36rem 22rem at 88% 12%, rgba(34, 211, 238, 0.08), transparent 60%);
+    radial-gradient(44rem 28rem at 8% 0%, rgba(139, 92, 246, 0.14), transparent 62%),
+    radial-gradient(40rem 26rem at 96% 18%, rgba(34, 211, 238, 0.1), transparent 60%),
+    radial-gradient(48rem 30rem at 78% 96%, rgba(251, 113, 133, 0.08), transparent 64%);
 }
 
 /* ---------- input card ---------- */
