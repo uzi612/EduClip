@@ -56,6 +56,16 @@ def _uniform_chapters(duration, words_per_sec=2.5, full_text=""):
     return chunks
 
 
+MIN_FLASHCARDS = 5
+MCQ_TARGET = 5
+
+GENERIC_REVIEW_PROMPTS = [
+    ("What is one key term introduced in this video?", "Replay the section and list the term with its definition."),
+    ("What is the central claim of this video?", "State it in one sentence, then find the supporting point."),
+    ("What example best illustrates the main idea?", "Describe the example and what it proves."),
+]
+
+
 def _fallback_flashcards(chapters, full_text):
     cards = []
     for ch in chapters:
@@ -67,7 +77,42 @@ def _fallback_flashcards(chapters, full_text):
         })
         if len(cards) >= FLASHCARD_TARGET:
             break
+    # Guarantee a usable deck floor even for very short videos: cycle the
+    # generic review prompts with advancing timestamps until MIN is met.
+    anchor = chapters[0]["start_sec"] if chapters else 0
+    i = 0
+    while len(cards) < MIN_FLASHCARDS:
+        front, back = GENERIC_REVIEW_PROMPTS[i % len(GENERIC_REVIEW_PROMPTS)]
+        cards.append({"front": front[:140], "back": back[:300],
+                      "timestamp_sec": anchor + i * 10})
+        i += 1
     return cards
+
+
+def _fallback_mcqs(chapters):
+    """Chapter-title MCQs: correct answer rotated across positions so the
+    key is not always option A. Padded so short videos still yield a quiz."""
+    titles = [c["title"] for c in chapters]
+    questions = []
+    for i, ch in enumerate(chapters):
+        if len(questions) >= MCQ_TARGET:
+            break
+        distractors = [t for t in titles if t != ch["title"]][:3]
+        while len(distractors) < 3:
+            distractors.append(["Key terms review", "Summary recap",
+                                "Counter-example check"][len(distractors) % 3])
+        answer = i % 4  # rotate the key across positions
+        options = list(distractors)
+        options.insert(answer, ch["title"])
+        questions.append({
+            "question": f"Which best describes the section starting at {ch['start_sec']}s?"[:200],
+            "options": options,
+            "answer_index": answer,
+            "explanation": (f"'{ch['title']}' covers this segment "
+                            f"({ch['start_sec']}s–{ch['end_sec']}s).")[:500],
+            "timestamp_sec": ch["start_sec"],
+        })
+    return questions
 
 
 def degraded_analysis(segments, title, duration_sec):
@@ -84,6 +129,7 @@ def degraded_analysis(segments, title, duration_sec):
         "chapters": chapters,
         "keywords": keywords,
         "flashcards": _fallback_flashcards(chapters, full_text)[:FLASHCARD_TARGET],
+        "mcqs": _fallback_mcqs(chapters)[:MCQ_TARGET],
         "stats": stats,
         "complexity": complexity_metrics(full_text),
         "graphs": build_all_graphs(segments, keywords, chapters, duration),
@@ -118,7 +164,10 @@ def run_analysis(segments, title, duration_sec, provider=None):
         stats = compute_stats(full_text, [k["term"] for k in keywords])
         from apps.analytics.graphs import build_all_graphs
         from apps.analytics.validators import ChartValidator
+        from services.llm_client import clean_mcq
 
+        mcqs = [m for m in (clean_mcq(q) for q in (raw.get("mcqs", []) or []))
+                if m][:8]
         graphs = build_all_graphs(segments, keywords, chapters, duration_sec)
         ChartValidator.validate(graphs)  # redundant by construction; blocks silent drift
         return {
@@ -126,6 +175,7 @@ def run_analysis(segments, title, duration_sec, provider=None):
             "chapters": chapters,
             "keywords": keywords,
             "flashcards": flashcards,
+            "mcqs": mcqs,
             "stats": stats,
             "complexity": complexity_metrics(full_text),
             "graphs": graphs,

@@ -35,6 +35,17 @@ def flashcard_dict(card):
     }
 
 
+def mcq_dict(question):
+    return {
+        "mcq_id": str(question.id),
+        "question": question.question,
+        "options": list(question.options or []),
+        "answer_index": question.answer_index,
+        "explanation": question.explanation or "",
+        "timestamp_sec": question.timestamp_sec,
+    }
+
+
 def base_video(video):
     return {
         "video_id": str(video.id),
@@ -80,6 +91,7 @@ def detail_video(video, analytics=None):
         "chapters": chapters,
         "keywords": keywords,
         "flashcard_count": video.flashcard_count or 0,
+        "mcq_count": video.mcq_count or 0,
         "analytics_preview": preview,
         "graphs": dict(analytics.graphs) if analytics is not None else {},
         "updated_at": iso8601(video.updated_at),
@@ -105,5 +117,5 @@ def video_lookup_or_none(video_id):
 
 
 __all__ = ["base_video", "progress_video", "detail_video", "list_item",
-           "chapter_dict", "keyword_dict", "flashcard_dict",
+           "chapter_dict", "keyword_dict", "flashcard_dict", "mcq_dict",
            "video_lookup_or_none", "iso8601"]

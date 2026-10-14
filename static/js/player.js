@@ -254,58 +254,18 @@
 
   function renderTopStrips(v) {
     var stats = $("statStrip");
-    var strip = $("keywordStrip");
     var preview = v && v.analytics_preview;
-    if (stats) {
-      if (preview) {
-        stats.innerHTML =
-          statPill(preview.reading_minutes, "min read") +
-          statPill(preview.chapter_count, "chapters") +
-          statPill((v.keywords || []).length, "keywords");
-        stats.classList.remove("hidden");
-      } else {
-        stats.classList.add("hidden");
-      }
-    }
-    if (strip) {
-      var kws = ((v && v.keywords) || []).slice(0, 8);
-      if (!kws.length) {
-        strip.classList.add("hidden");
-        return;
-      }
-      strip.innerHTML = kws
-        .map(function (k) {
-          return (
-            '<button type="button" data-keyword="' + esc(k.term) + '" title="' +
-            esc(k.count + " mentions · score " + k.score) + '"' +
-            ' class="px-3 py-1.5 rounded-full border border-cyan-500/30 bg-cyan-500/10 text-cyan-300 text-xs font-mono hover:border-cyan-400/60 transition">' +
-            esc(k.term) + " · " + esc(k.count) + "</button>"
-          );
-        })
-        .join("");
-      strip.classList.remove("hidden");
+    if (!stats) return;
+    if (preview) {
+      stats.innerHTML =
+        statPill(preview.reading_minutes, "min read") +
+        statPill(preview.chapter_count, "chapters") +
+        statPill(v.flashcard_count || 0, "flashcards");
+      stats.classList.remove("hidden");
+    } else {
+      stats.classList.add("hidden");
     }
   }
-
-  // Keyword pills highlight every chapter mentioning the term.
-  document.addEventListener("click", function (e) {
-    var pill = e.target.closest("[data-keyword]");
-    if (!pill) return;
-    var term = (pill.getAttribute("data-keyword") || "").toLowerCase();
-    if (!term) return;
-    var hits = 0;
-    var rows = document.querySelectorAll(".chapter-row");
-    for (var i = 0; i < rows.length; i++) {
-      var hay = (rows[i].textContent || "").toLowerCase();
-      var on = term && hay.indexOf(term) !== -1;
-      rows[i].classList.toggle("ring-2", on);
-      rows[i].classList.toggle("ring-cyan-400", on);
-      if (on) hits++;
-    }
-    if (typeof showToast === "function") {
-      showToast(hits ? hits + " chapter(s) mention this term." : "No chapter mentions this term.", "info");
-    }
-  });
 
   function renderHeader(v) {
     var title = $("videoTitle");
@@ -385,6 +345,10 @@
     if (data.flashcards === undefined && typeof window.renderFlashcards === "function") {
       // Payload had no cards — fall back to the dedicated endpoint.
       window.renderFlashcards(undefined, data.video_id);
+    }
+    if (typeof window.renderMCQs === "function") {
+      // MCQs always come from the dedicated endpoint (keeps detail light).
+      window.renderMCQs(undefined, data.video_id);
     }
   }
 

@@ -87,7 +87,7 @@
     }, 500);
   }
 
-  function studyMarkdown() {
+  function studyMarkdown(mcqs) {
     var v = currentVideo() || {};
     var lines = ["# " + (v.title || "Untitled video"), ""];
     if (v.channel) lines.push("*" + v.channel + "*");
@@ -118,6 +118,19 @@
       lines.push("## Keywords", "",
         kws.map(function (k) { return "- " + k.term + " (×" + k.count + ")"; }).join("\n"), "");
     }
+    mcqs = mcqs || [];
+    if (mcqs.length) {
+      lines.push("## Practice quiz", "");
+      mcqs.forEach(function (q, i) {
+        lines.push((i + 1) + ". " + (q.question || ""));
+        (q.options || []).forEach(function (o, oi) {
+          lines.push("   " + String.fromCharCode(65 + oi) + ") " + o +
+            (oi === q.answer_index ? " ✓" : ""));
+        });
+        if (q.explanation) lines.push("   _" + q.explanation + "_");
+        lines.push("");
+      });
+    }
     var box = $("scratchText");
     if (box && box.value.trim()) {
       lines.push("## My notes", "", box.value.trim(), "");
@@ -145,10 +158,25 @@
     if (md) {
       md.addEventListener("click", function () {
         var v = currentVideo() || {};
-        var slug = String(v.title || "educlip-notes").toLowerCase()
-          .replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60) || "educlip-notes";
-        download(slug + ".md", studyMarkdown(), "text/markdown;charset=utf-8");
-        if (typeof showToast === "function") showToast("Study pack downloaded.", "success");
+        if (v.status && v.status !== "ready") {
+          if (typeof showToast === "function") {
+            showToast("Not ready yet — export unlocks once processing finishes.", "info");
+          }
+          return;
+        }
+        var done = function (mcqs) {
+          var slug = String(v.title || "educlip-notes").toLowerCase()
+            .replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60) || "educlip-notes";
+          download(slug + ".md", studyMarkdown(mcqs), "text/markdown;charset=utf-8");
+          if (typeof showToast === "function") showToast("Study pack downloaded.", "success");
+        };
+        if (v.video_id && typeof api !== "undefined") {
+          api.get("/video/" + encodeURIComponent(v.video_id) + "/mcqs")
+            .then(function (data) { done((data && data.mcqs) || []); })
+            .catch(function () { done([]); });
+        } else {
+          done([]);
+        }
       });
     }
     var print = $("exportPrint");

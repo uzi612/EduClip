@@ -53,6 +53,7 @@ def delete_video_records(video):
 
     from apps.analytics.models import Analytics
     from apps.flashcards.models import Flashcard
+    from apps.quiz.models import MCQ
 
     vid = video.id
     if getattr(settings, "MONGODB_ATLAS_URI", ""):
@@ -65,11 +66,13 @@ def delete_video_records(video):
                     db.videos.delete_one({"_id": vid}, session=session)
                     db.analytics.delete_many({"video_id": vid}, session=session)
                     db.flashcards.delete_many({"video_id": vid}, session=session)
+                    db.mcqs.delete_many({"video_id": vid}, session=session)
                     db.transcripts_overflow.delete_many({"video_id": vid}, session=session)
             return
         except Exception:
             pass
     Flashcard.objects(video_id=video).delete()
+    MCQ.objects(video_id=video).delete()
     Analytics.objects(video_id=video).delete()
     try:
         from services.mongo import get_db

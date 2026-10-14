@@ -10,6 +10,7 @@ from apps.api_v1.presenters import (
     detail_video,
     flashcard_dict,
     list_item,
+    mcq_dict,
     progress_video,
     video_lookup_or_none,
 )
@@ -115,6 +116,25 @@ def video_flashcards(request, video_id):
         "page_size": page_size,
         "total": total,
         "flashcards": [flashcard_dict(c) for c in cards],
+    })
+
+
+@api_view(["GET"])
+def video_mcqs(request, video_id):
+    guard = _db_guarded(request)
+    if guard is not None:
+        return guard
+    video = video_lookup_or_none(video_id)
+    if video is None:
+        return _not_found(request)
+    from apps.quiz.models import MCQ
+
+    qs = MCQ.objects(video_id=video).order_by("timestamp_sec", "id")
+    questions = list(qs)
+    return _cached_response({
+        "video_id": str(video.id),
+        "total": len(questions),
+        "mcqs": [mcq_dict(q) for q in questions],
     })
 
 

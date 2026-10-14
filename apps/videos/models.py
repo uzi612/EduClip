@@ -65,6 +65,7 @@ class Video(me.Document):
     task_id = me.StringField()
     error = me.StringField()
     flashcard_count = me.IntField(default=0, min_value=0)
+    mcq_count = me.IntField(default=0, min_value=0)
     idempotency_key = me.StringField()
     created_at = me.DateTimeField(default=datetime.utcnow)
     updated_at = me.DateTimeField(default=datetime.utcnow)
