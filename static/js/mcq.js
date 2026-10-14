@@ -63,10 +63,10 @@
     var mark = "";
     if (locked) {
       if (oi === q.answer_index) {
-        cls = "border-emerald-500/60 bg-emerald-500/10";
+        cls = "border-emerald-500/60 bg-emerald-500/10 mcq-glow-ok";
         mark = '<span class="ml-auto font-bold text-emerald-300" aria-hidden="true">✓</span>';
       } else if (oi === picked) {
-        cls = "border-red-500/60 bg-red-500/10";
+        cls = "border-red-500/60 bg-red-500/10 mcq-glow-bad";
         mark = '<span class="ml-auto font-bold text-red-300" aria-hidden="true">✗</span>';
       } else {
         cls = "border-slate-800 bg-slate-900/50 opacity-60";
@@ -101,7 +101,7 @@
       }).join("") +
       "</div>" +
       (locked
-        ? '<div class="mt-3 rounded-xl px-4 py-3 text-sm ' +
+        ? '<div class="mcq-explain mt-3 rounded-xl px-4 py-3 text-sm ' +
           (correct
             ? "border border-emerald-500/40 bg-emerald-500/10 text-emerald-200"
             : "border border-red-500/40 bg-red-500/10 text-red-200") +

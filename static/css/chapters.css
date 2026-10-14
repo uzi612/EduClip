@@ -51,6 +51,26 @@
   }
 }
 
+/* MCQ feedback: glowing selection states + sliding explanation drawer */
+.mcq-glow-ok {
+  box-shadow: 0 0 24px -8px rgba(16, 185, 129, 0.55);
+}
+.mcq-glow-bad {
+  box-shadow: 0 0 24px -8px rgba(239, 68, 68, 0.5);
+}
+.mcq-explain {
+  animation: mcq-slide-in 0.25s cubic-bezier(0.2, 0.7, 0.3, 1) both;
+}
+@keyframes mcq-slide-in {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mcq-explain {
+    animation: none;
+  }
+}
+
 /* Rich text (rendered from LLM summaries/answers): code + math styling */
 .rich-text .rich-code {
   margin: 0.5rem 0;

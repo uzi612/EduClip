@@ -37,11 +37,33 @@ iframe {
   background: transparent;
 }
 
-/* Visible keyboard focus (WCAG 2.1 AA) */
+/* Design tokens: deep-slate surfaces, obsidian text, indigo accents. */
+:root {
+  --edu-ink: #0b0f17;
+  --edu-obsidian: #030712;
+  --edu-edge: #1e2640;
+  --edu-indigo: #6366f1;
+  --edu-violet: #8b5cf6;
+  --edu-cyan: #22d3ee;
+  --edu-ring: rgba(139, 92, 246, 0.55);
+  --edu-shadow-card: 0 20px 40px -15px rgba(0, 0, 0, 0.05);
+  --edu-shadow-lift: 0 26px 48px -18px rgba(124, 58, 237, 0.35);
+  --edu-ease: cubic-bezier(0.2, 0.7, 0.3, 1);
+}
+
+/* Smooth in-page anchor scrolling (motion-safe only; reduced-motion kills it). */
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+/* Visible keyboard focus (WCAG 2.1 AA) with accent glow */
 :focus-visible {
   outline: 2px solid #8b5cf6;
   outline-offset: 2px;
   border-radius: 4px;
+  box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.18);
 }
 
 @media (prefers-reduced-motion: reduce) {
