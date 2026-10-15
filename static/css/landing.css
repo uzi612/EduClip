@@ -193,24 +193,19 @@ html.dark .landing-input {
   font-weight: 700;
   font-size: 0.9rem;
   color: #fff;
-  background: #0f172a;
-  transition: background 0.2s ease, opacity 0.2s ease, transform 0.15s ease;
+  background: linear-gradient(100deg, #7c3aed, #06b6d4);
+  box-shadow: 0 12px 24px -12px rgba(124, 58, 237, 0.6);
+  transition: opacity 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
 }
 .landing-submit:hover {
-  background: #1e293b;
+  opacity: 0.92;
+  box-shadow: 0 16px 30px -12px rgba(124, 58, 237, 0.7);
 }
 .landing-submit:active {
   transform: scale(0.98);
 }
 .landing-submit:disabled {
   opacity: 0.6;
-}
-html.dark .landing-submit {
-  background: #f3f4f6;
-  color: #0f172a;
-}
-html.dark .landing-submit:hover {
-  background: #fff;
 }
 
 /* ---------- demo chips ---------- */

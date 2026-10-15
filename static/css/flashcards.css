@@ -27,6 +27,7 @@
   padding: 1.5rem;
   border-radius: 1rem;
   border: 1px solid #1e293b;
+  box-shadow: 0 20px 40px -18px rgba(0, 0, 0, 0.55);
 }
 
 .flash-front {
@@ -34,8 +35,12 @@
 }
 
 .flash-back {
-  background: linear-gradient(135deg, #4c1d95, #0e7490);
+  background: linear-gradient(135deg, rgba(76, 29, 149, 0.95), rgba(14, 116, 144, 0.9));
   transform: rotateY(180deg);
+}
+
+.flash-scene.ring-2 {
+  border-radius: 1rem;
 }
 
 @media (prefers-reduced-motion: reduce) {

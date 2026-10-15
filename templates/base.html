@@ -1,19 +1,22 @@
 {% load static %}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="description" content="EduClip AI — Turn any YouTube video into an interactive course." />
+  <meta name="theme-color" content="#030712" />
   <title>{% block title %}EduClip AI{% endblock %}</title>
 
-  <!-- Theme: light is default; restore saved dark preference before paint to avoid FOUC -->
+  <!-- Theme: dark is default; restore saved light preference before paint to avoid FOUC -->
   <script>
     try {
-      if (localStorage.getItem("educlip-theme") === "dark") {
+      if (localStorage.getItem("educlip-theme") === "light") {
+        document.documentElement.classList.remove("dark");
+      } else {
         document.documentElement.classList.add("dark");
       }
-    } catch (e) { /* private mode: stay light */ }
+    } catch (e) { /* private mode: stay dark */ }
   </script>
 
   <!-- Fonts: Inter + Plus Jakarta Sans (display) + JetBrains Mono (timestamps/IDs) -->
@@ -34,8 +37,9 @@
   {% block head %}{% endblock %}
 </head>
 <body class="bg-void text-gray-100 font-sans antialiased min-h-screen">
+  <a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:px-4 focus:py-2 focus:rounded-xl focus:bg-violet-600 focus:text-white">Skip to content</a>
   {% include "partials/navbar.html" %}
-  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  <main id="main" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
     {% block content %}{% endblock %}
   </main>
   {% include "partials/footer.html" %}

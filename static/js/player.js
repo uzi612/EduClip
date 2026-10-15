@@ -131,7 +131,7 @@
       }
       var toast = $("chapterToast");
       if (toast) {
-        toast.textContent = "\uD83D\uDCD6 " + chapters[idx].title;
+        toast.textContent = chapters[idx].title;
         toast.classList.remove("hidden");
         clearTimeout(toast._t);
         toast._t = setTimeout(function () {

@@ -98,8 +98,7 @@
   function pendingCopy() {
     return (
       '<div class="rounded-2xl border border-dashed border-slate-800 p-10 text-center">' +
-      '<div class="text-3xl">📊</div>' +
-      '<p class="mt-3 font-semibold">Analytics pending…</p>' +
+      '<p class="font-semibold">Analytics pending…</p>' +
       '<p class="mt-1 text-sm text-gray-400">Charts appear here once the video finishes processing.</p></div>'
     );
   }

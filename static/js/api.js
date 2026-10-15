@@ -225,19 +225,23 @@ function showToast(message, type, action) {
   const wrap = document.getElementById("toastWrap");
   if (!wrap) return;
   const colors = {
-    info: "border-slate-700 bg-slate-900",
-    success: "border-emerald-500/50 bg-emerald-950/90",
-    error: "border-red-500/50 bg-red-950/90",
+    info: "border-slate-700/80 bg-slate-900/95",
+    success: "border-emerald-500/40 bg-emerald-950/95",
+    error: "border-red-500/40 bg-red-950/95",
   };
-  const icons = { info: "ℹ", success: "✓", error: "⚠" };
+  const dots = {
+    info: "bg-cyan-400",
+    success: "bg-emerald-400",
+    error: "bg-red-400",
+  };
   const el = document.createElement("div");
   el.className =
-    "px-4 py-3 rounded-xl border text-sm shadow-2xl flex items-center gap-3 " +
+    "px-4 py-3 rounded-2xl border text-sm shadow-2xl flex items-center gap-3 backdrop-blur-xl " +
     (colors[type] || colors.info);
   el.setAttribute("role", type === "error" ? "alert" : "status");
   const icon = document.createElement("span");
   icon.setAttribute("aria-hidden", "true");
-  icon.textContent = icons[type] || icons.info;
+  icon.className = "w-2 h-2 rounded-full shrink-0 " + (dots[type] || dots.info);
   el.appendChild(icon);
   const text = document.createElement("span");
   text.textContent = message;

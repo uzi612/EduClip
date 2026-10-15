@@ -90,11 +90,11 @@
       esc(c.difficulty || "medium") +
       "</span></div>" +
       '<p class="mt-2 font-semibold">' + esc(c.front || "Untitled") + "</p>" +
-      '<span class="mt-4 text-xs text-gray-400">Click to reveal →</span>' +
+      '<span class="mt-4 text-xs text-gray-500">Select to reveal answer</span>' +
       "</div>" +
       '<div class="flash-face flash-back">' +
       '<div class="text-sm leading-relaxed rich-text">' + RTF(c.back || "") + "</div>" +
-      '<button type="button" data-seek="' + esc(c.timestamp_sec || 0) + '" class="mt-4 text-xs underline underline-offset-2 self-start hover:opacity-80 transition">↗ Jump to ' +
+      '<button type="button" data-seek="' + esc(c.timestamp_sec || 0) + '" class="mt-4 text-xs font-semibold text-cyan-300 underline underline-offset-2 self-start hover:text-cyan-200 transition">Jump to ' +
       esc(fmtStamp(c.timestamp_sec)) +
       "</button>" +
       "</div></div></div>"
