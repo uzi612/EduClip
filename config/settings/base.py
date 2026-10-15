@@ -89,5 +89,8 @@ CELERY_TASK_ALWAYS_EAGER = os.getenv("CELERY_TASK_ALWAYS_EAGER", "False").lower(
 YOUTUBE_API_KEY = os.getenv("YOUTUBE_API_KEY", "")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
+# Model identifiers rot (1.5-flash, then 2.5-flash were both retired), so the
+# active default lives in env, not hardcoded call sites.
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.8-flash")
 LLM_PROVIDER = os.getenv("LLM_PROVIDER", "openai")
 EDUCLIP_VERSION = "1.0.0"

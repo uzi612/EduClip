@@ -17,9 +17,9 @@ logger = logging.getLogger(__name__)
 OPENAI_MODEL = "gpt-4o-mini"
 OPENAI_TIMEOUT_SEC = 60
 GEMINI_TIMEOUT_SEC = 60
-# gemini-1.5-flash was retired (API lists only 2.5-flash/generation aliases);
-# pin the stable 2.5-flash identifier so calls stop 404ing.
-GEMINI_MODEL = "gemini-2.5-flash"
+# Fallback default only — settings.GEMINI_MODEL (env GEMINI_MODEL) wins, since
+# identifiers rot (1.5-flash, then 2.5-flash were both retired for new users).
+GEMINI_MODEL = "gemini-3.8-flash"
 MAX_TRANSCRIPT_SEGMENTS = 800
 MAX_RETRIES = 2
 # Exponential backoff for LLM timeouts/quota (BACKEND-06): delay before the
@@ -151,13 +151,19 @@ def _call_gemini(transcript, title):
             "to generate video insights.",
             retryable=False, provider="gemini",
         )
-    logger.info("llm call start: provider=gemini title=%.60s chars=%d",
-                title, len(transcript))
+    try:
+        from django.conf import settings as _dj_settings
+
+        model_id = getattr(_dj_settings, "GEMINI_MODEL", "") or GEMINI_MODEL
+    except Exception:
+        model_id = GEMINI_MODEL
+    logger.info("llm call start: provider=gemini model=%s title=%.60s chars=%d",
+                model_id, title, len(transcript))
     started = time.perf_counter()
     try:
         genai.configure(api_key=api_key)
         model = genai.GenerativeModel(
-            GEMINI_MODEL,
+            model_id,
             system_instruction=SYSTEM_PROMPT,
             generation_config={"response_mime_type": "application/json",
                                "temperature": 0.3, "max_output_tokens": 3000},
