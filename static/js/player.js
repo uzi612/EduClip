@@ -10,7 +10,9 @@
   var player = null;
   var playerReady = false;
   var chapters = [];
+  var transcript = [];
   var currentChapter = -1;
+  var currentLine = -1;
   var videoId = null;
   var syncTimer = null;
 
@@ -103,10 +105,124 @@
     showToast("The YouTube player hit an error — the video may be private or embedding-disabled.", "error");
   }
 
+  /* ---------- study aids: done checklist + resume (localStorage, per video) ---------- */
+
+  function doneKey() { return "educlip-done-" + (videoId || "home"); }
+  function posKey() { return "educlip-pos-" + (videoId || "home"); }
+
+  function getDone() {
+    try {
+      var raw = localStorage.getItem(doneKey());
+      var arr = raw ? JSON.parse(raw) : [];
+      var set = {};
+      for (var i = 0; i < arr.length; i++) set[arr[i]] = true;
+      return set;
+    } catch (_) { return {}; }
+  }
+
+  function saveDone(set) {
+    try {
+      var arr = Object.keys(set).filter(function (k) { return set[k]; });
+      localStorage.setItem(doneKey(), JSON.stringify(arr));
+    } catch (_) { /* private mode */ }
+  }
+
+  var lastPosSave = 0;
+
+  function savePos(t) {
+    try { localStorage.setItem(posKey(), String(Math.floor(t))); }
+    catch (_) { /* private mode */ }
+  }
+
+  function readPos() {
+    try { return Math.max(0, Math.floor(Number(localStorage.getItem(posKey())) || 0)); }
+    catch (_) { return 0; }
+  }
+
+  function paintProgress() {
+    var bar = $("chapterProgress");
+    if (!bar || !chapters.length) return;
+    var done = getDone();
+    var n = 0;
+    for (var i = 0; i < chapters.length; i++) if (done[i]) n++;
+    bar.style.width = Math.round((n / chapters.length) * 100) + "%";
+  }
+
+  function copyText(text, okMsg) {
+    function done() { showToast(okMsg, "success"); }
+    if (text == null || !text) return;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done, function () { showToast("Copy failed in this browser.", "error"); });
+      return;
+    }
+    try {
+      var ta = document.createElement("textarea");
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
+      done();
+    } catch (_) { showToast("Copy failed in this browser.", "error"); }
+  }
+
+  // Extractive takeaways: first 3 sentences of the existing summary (no LLM).
+  function takeaways(summary) {
+    var parts = String(summary || "").split(/(?<=[.!?])\s+/);
+    var out = [];
+    for (var i = 0; i < parts.length && out.length < 3; i++) {
+      var s = parts[i].trim();
+      if (s.length > 12) out.push(s);
+    }
+    return out;
+  }
+
+  function renderBrief(v) {
+    var bar = $("briefBar");
+    if (!bar) return;
+    var keys = (v && v.keywords) || [];
+    var hasSummary = Boolean(v && v.summary);
+    if (!hasSummary && !keys.length) { bar.classList.add("hidden"); return; }
+    bar.classList.remove("hidden");
+    var list = $("briefTakeaways");
+    if (list) {
+      var items = takeaways(v.summary);
+      list.innerHTML = items.map(function (s) {
+        return "<li class='flex gap-2'><span class='text-violet-600 dark:text-violet-300 font-bold' aria-hidden='true'>→</span><span>" + esc(s) + "</span></li>";
+      }).join("") || "<li class='text-gray-500'>Summary available below.</li>";
+    }
+    var chips = $("keywordChips");
+    if (chips) {
+      chips.innerHTML = keys.slice(0, 8).map(function (k) {
+        return '<button type="button" data-kwseek="' + esc(k.term) + '" class="px-2.5 py-1 rounded-full border border-slate-300 dark:border-slate-700 bg-white/60 dark:bg-slate-900/50 text-xs text-slate-600 dark:text-gray-300 hover:border-violet-500/60 hover:text-slate-900 dark:hover:text-white transition">' +
+          esc(k.term) + ' <span class="font-mono opacity-70">×' + esc(k.count) + "</span></button>";
+      }).join("");
+    }
+    var start = $("briefStart");
+    if (start) {
+      var preview = v && v.analytics_preview;
+      var n = (preview && preview.chapter_count) || (v.chapters || []).length;
+      if (n > 1) {
+        start.classList.remove("hidden");
+        var best = 0, bestScore = -1;
+        ((v && v.chapters) || []).forEach(function (c, i) {
+          var s = ((c.keyword_refs || []).length * 10) + ((c.summary || "").length / 100);
+          if (s > bestScore) { bestScore = s; best = i; }
+        });
+        start.textContent = "Start here → " + fmtStamp((((v.chapters || [])[best] || {}).start_sec) || 0);
+        start.onclick = function () {
+          var c = (v.chapters || [])[best];
+          if (c) window.seekToTimestamp(c.start_sec);
+        };
+      } else start.classList.add("hidden");
+    }
+  }
+
   function syncChapter() {
     if (!playerReady || !player || typeof player.getCurrentTime !== "function") return;
     if (!chapters.length) return;
     var t = Math.floor(player.getCurrentTime());
+    if (t - lastPosSave > 10 || t < lastPosSave) { lastPosSave = t; savePos(t); }
     var idx = -1;
     for (var i = 0; i < chapters.length; i++) {
       if (t >= chapters[i].start_sec && t <= chapters[i].end_sec) {
@@ -138,6 +254,15 @@
           toast.classList.add("hidden");
         }, 2500);
       }
+    }
+    if (transcript.length) {
+      var line = -1;
+      for (var k = 0; k < transcript.length; k++) {
+        var st = Number(transcript[k].start) || 0;
+        var du = Number(transcript[k].duration) || 0;
+        if (t >= Math.floor(st) && t < Math.floor(st) + Math.max(1, Math.ceil(du))) { line = k; break; }
+      }
+      if (line !== currentLine) { currentLine = line; paintTranscriptActive(); }
     }
   }
 
@@ -186,13 +311,14 @@
       '</span><span class="text-gray-500 font-mono">' +
       esc(fmtDurLen(dur)) +
       "</span></div>" +
-      '<div class="font-semibold group-hover:text-violet-300 transition">' +
+      '<div class="chapter-title font-semibold group-hover:text-violet-300 transition">' +
       esc(c.title || "Untitled chapter") +
       "</div>" +
       (c.summary
         ? '<p class="chapter-preview text-sm text-gray-400 line-clamp-2 mt-1">' + RT(c.summary) + "</p>"
         : "") +
       "</button>" +
+      '<button type="button" data-done="' + i + '" aria-pressed="false" aria-label="Mark chapter done" class="chapter-done shrink-0 self-center w-7 h-7 mr-1 rounded-full border border-slate-700 text-gray-500 hover:border-emerald-500/60 hover:text-emerald-300 transition text-sm">✓</button>' +
       '<button type="button" class="chapter-toggle shrink-0 px-3 text-gray-500 hover:text-gray-100 transition" aria-expanded="false" aria-controls="chapter-detail-' + i + '" aria-label="Expand chapter details">' +
       '<svg class="chapter-chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>' +
       "</button></div>" +
@@ -228,9 +354,53 @@
         return rowHTML(c, i);
       })
       .join("");
+    var done = getDone();
+    var rows = wrap.querySelectorAll(".chapter-row");
+    for (var r = 0; r < rows.length; r++) {
+      if (done[r]) {
+        rows[r].classList.add("done");
+        var b = rows[r].querySelector("[data-done]");
+        if (b) { b.setAttribute("aria-pressed", "true"); b.classList.add("done-on"); }
+      }
+    }
+    paintProgress();
     var first = wrap.querySelector(".chapter-row");
     if (first) setRowOpen(first, true); // first chapter expanded by default
   };
+
+  // Done toggles + keyword-seek (separate from the single [data-seek] listener).
+  document.addEventListener("click", function (e) {
+    var doneBtn = e.target.closest ? e.target.closest("[data-done]") : null;
+    if (doneBtn) {
+      var row = doneBtn.closest(".chapter-row");
+      var rows = Array.prototype.slice.call(document.querySelectorAll("#chapterList .chapter-row"));
+      var idx = rows.indexOf(row);
+      if (idx >= 0) {
+        var set = getDone();
+        if (set[idx]) delete set[idx];
+        else set[idx] = true;
+        saveDone(set);
+        row.classList.toggle("done", Boolean(set[idx]));
+        doneBtn.setAttribute("aria-pressed", String(Boolean(set[idx])));
+        doneBtn.classList.toggle("done-on", Boolean(set[idx]));
+        paintProgress();
+      }
+      return;
+    }
+    var kw = e.target.closest ? e.target.closest("[data-kwseek]") : null;
+    if (kw) {
+      var term = (kw.getAttribute("data-kwseek") || "").toLowerCase();
+      if (!term) return;
+      var found = -1;
+      for (var i = 0; i < chapters.length; i++) {
+        var c = chapters[i];
+        var hay = ((c.title || "") + " " + (c.summary || "") + " " + ((c.keyword_refs || []).join(" "))).toLowerCase();
+        if (hay.indexOf(term) >= 0) { found = i; break; }
+      }
+      if (found >= 0) window.seekToTimestamp(chapters[found].start_sec);
+      else showToast("No chapter mentions “" + term + "” directly — try the chapter list.", "info");
+    }
+  });
 
   window.renderSummary = function (v) {
     var card = $("summaryCard");
@@ -267,10 +437,81 @@
     }
   }
 
+  /* ---------- transcript: searchable click-to-seek lines ---------- */
+
+  function transcriptRow(s, i) {
+    return '<button type="button" data-seek="' + esc(Math.floor(s.start || 0)) + '" data-tline="' + i + '"' +
+      ' class="transcript-row w-full flex gap-3 text-left px-3 py-2 rounded-lg text-sm hover:bg-violet-500/10 transition">' +
+      '<span class="font-mono text-cyan-600 dark:text-cyan-400 shrink-0">' + esc(fmtStamp(s.start)) + "</span>" +
+      '<span class="text-slate-700 dark:text-gray-300">' + esc(s.text || "") + "</span></button>";
+  }
+
+  function paintTranscript(filter) {
+    var list = $("transcriptList");
+    var pending = $("transcriptPending");
+    var count = $("transcriptCount");
+    if (!list) return;
+    var q = (filter || "").toLowerCase().trim();
+    var rows = transcript.map(function (s, i) { return { s: s, i: i }; });
+    if (q) rows = rows.filter(function (r) { return (r.s.text || "").toLowerCase().indexOf(q) >= 0; });
+    if (!transcript.length) {
+      list.innerHTML = "";
+      if (pending) pending.classList.remove("hidden");
+      if (count) count.textContent = "";
+      return;
+    }
+    if (pending) pending.classList.add("hidden");
+    if (count) count.textContent = q ? rows.length + " / " + transcript.length + " lines" : transcript.length + " lines";
+    list.innerHTML = rows.length
+      ? rows.map(function (r) { return transcriptRow(r.s, r.i); }).join("")
+      : '<p class="text-sm text-gray-500 p-4 text-center">No lines match “' + esc(filter) + ".”</p>";
+    paintTranscriptActive();
+  }
+
+  function paintTranscriptActive() {
+    var rows = document.querySelectorAll ? document.querySelectorAll(".transcript-row") : [];
+    for (var k = 0; k < rows.length; k++) {
+      var on = Number(rows[k].getAttribute("data-tline")) === currentLine;
+      rows[k].classList.toggle("bg-violet-500/15", on);
+    }
+  }
+
+  window.renderTranscript = function (list, vid) {
+    if (Array.isArray(list) && list.length) {
+      transcript = list.slice();
+      currentLine = -1;
+      paintTranscript(($("transcriptSearch") || {}).value || "");
+      return;
+    }
+    if (!list && vid && typeof api !== "undefined") {
+      api.get("/video/" + encodeURIComponent(vid) + "/transcript?page=1&page_size=500")
+        .then(function (data) {
+          transcript = (data && data.segments) || [];
+          currentLine = -1;
+          paintTranscript(($("transcriptSearch") || {}).value || "");
+        })
+        .catch(function () {
+          transcript = [];
+          paintTranscript("");
+        });
+      return;
+    }
+    transcript = [];
+    paintTranscript("");
+  };
+
+  if (typeof document !== "undefined" && document.addEventListener && !window.__transcriptSearchBound) {
+    window.__transcriptSearchBound = true;
+    document.addEventListener("input", function (e) {
+      if (e.target && e.target.id === "transcriptSearch") paintTranscript(e.target.value);
+    });
+  }
+
   function renderHeader(v) {
     var title = $("videoTitle");
     var meta = $("videoMeta");
     renderTopStrips(v);
+    renderBrief(v);
     if (title) title.textContent = v.title || "Untitled video";
     if (meta) {
       var bits = [];
@@ -342,6 +583,10 @@
     }
     window.EDUCLIP.youtubeId = data.youtube_id;
     initPlayer();
+    bindStudyButtons(data);
+    if (typeof window.renderTranscript === "function") {
+      window.renderTranscript(undefined, data.video_id);
+    }
     if (data.flashcards === undefined && typeof window.renderFlashcards === "function") {
       // Payload had no cards — fall back to the dedicated endpoint.
       window.renderFlashcards(undefined, data.video_id);
@@ -349,6 +594,45 @@
     if (typeof window.renderMCQs === "function") {
       // MCQs always come from the dedicated endpoint (keeps detail light).
       window.renderMCQs(undefined, data.video_id);
+    }
+  }
+
+  function bindStudyButtons(data) {
+    var resume = $("resumeBtn");
+    if (resume) {
+      var pos = readPos();
+      var dur = Number(data.duration_sec) || 0;
+      if (pos > 10 && (!dur || pos < dur - 10)) {
+        resume.classList.remove("hidden");
+        resume.textContent = "Resume at " + fmtStamp(pos);
+        resume.onclick = function () { window.seekToTimestamp(pos); };
+      } else resume.classList.add("hidden");
+    }
+    var cs = $("copySummary");
+    if (cs && !cs._bound) {
+      cs._bound = true;
+      cs.addEventListener("click", function () {
+        copyText((window.EDUCLIP && window.EDUCLIP.video && window.EDUCLIP.video.summary) || "", "Summary copied.");
+      });
+    }
+    var ct = $("copyStamp");
+    if (ct && !ct._bound) {
+      ct._bound = true;
+      ct.addEventListener("click", function () {
+        var t = typeof window.getPlayerTime === "function" ? window.getPlayerTime() : 0;
+        var url = window.location.origin + window.location.pathname + "#t=" + Math.floor(t);
+        copyText(url, "Link copied (" + fmtStamp(t) + ").");
+      });
+    }
+    if (!window.__posSaver) {
+      window.__posSaver = true;
+      window.addEventListener("pagehide", function () {
+        try {
+          if (playerReady && player && typeof player.getCurrentTime === "function") {
+            savePos(player.getCurrentTime());
+          }
+        } catch (_) { /* noop */ }
+      });
     }
   }
 

@@ -47,10 +47,38 @@
     return Array.prototype.slice.call(document.querySelectorAll("#flashDeck .flash-scene"));
   }
 
+  function videoKey() {
+    var v = (window.EDUCLIP && window.EDUCLIP.video) || {};
+    return v.video_id || "home";
+  }
+
+  function knownStoreKey() { return "educlip-known-" + videoKey(); }
+
+  function cardKey(c) { return String((c && (c.card_id || c.front)) || ""); }
+
+  function getKnown() {
+    try {
+      var arr = JSON.parse(localStorage.getItem(knownStoreKey()) || "[]");
+      var set = {};
+      for (var i = 0; i < arr.length; i++) set[arr[i]] = true;
+      return set;
+    } catch (_) { return {}; }
+  }
+
+  function saveKnown(set) {
+    try {
+      localStorage.setItem(knownStoreKey(), JSON.stringify(Object.keys(set).filter(function (k) { return set[k]; })));
+    } catch (_) { /* private mode */ }
+  }
+
   function paintCounter() {
     var el = $("flashCounter");
     if (!el) return;
-    el.textContent = cards.length ? current + 1 + " / " + cards.length : "";
+    if (!cards.length) { el.textContent = ""; return; }
+    var known = getKnown();
+    var n = 0;
+    for (var i = 0; i < cards.length; i++) if (known[cardKey(cards[i])]) n++;
+    el.textContent = (current + 1) + " / " + cards.length + (n ? " · " + n + " known" : "");
   }
 
   function highlight() {
@@ -78,8 +106,10 @@
       .concat(c.tags || [])
       .map(esc)
       .join(" · ");
+    var key = cardKey(c);
+    var known = Boolean(getKnown()[key]);
     return (
-      '<div class="flash-scene rounded-2xl" tabindex="0" role="button" aria-label="Flashcard: ' +
+      '<div class="flash-scene rounded-2xl' + (known ? " known" : "") + '" tabindex="0" role="button" aria-label="Flashcard: ' +
       esc(c.front || "Untitled") +
       '. Activate to flip.">' +
       '<div class="flash-inner">' +
@@ -94,10 +124,14 @@
       "</div>" +
       '<div class="flash-face flash-back">' +
       '<div class="text-sm leading-relaxed rich-text">' + RTF(c.back || "") + "</div>" +
-      '<button type="button" data-seek="' + esc(c.timestamp_sec || 0) + '" class="mt-4 text-xs font-semibold text-cyan-300 underline underline-offset-2 self-start hover:text-cyan-200 transition">Jump to ' +
+      '<div class="mt-4 flex items-center gap-3">' +
+      '<button type="button" data-seek="' + esc(c.timestamp_sec || 0) + '" class="text-xs font-semibold text-cyan-300 underline underline-offset-2 self-start hover:text-cyan-200 transition">Jump to ' +
       esc(fmtStamp(c.timestamp_sec)) +
       "</button>" +
-      "</div></div></div>"
+      '<button type="button" data-known="' + esc(key) + '" aria-pressed="' + (known ? "true" : "false") + '" class="text-xs border border-slate-600 rounded-lg px-2 py-1 text-gray-300 hover:border-emerald-500/60 hover:text-emerald-200 transition">' +
+      (known ? "✓ Known" : "Mark known") +
+      "</button>" +
+      "</div></div></div></div>"
     );
   }
 
@@ -340,6 +374,18 @@
   }
 
   document.addEventListener("click", function (e) {
+    var knownBtn = e.target.closest ? e.target.closest("[data-known]") : null;
+    if (knownBtn) {
+      var k = knownBtn.getAttribute("data-known") || "";
+      if (k) {
+        var set = getKnown();
+        if (set[k]) delete set[k];
+        else set[k] = true;
+        saveKnown(set);
+        render();
+      }
+      return;
+    }
     var chip = e.target.closest("[data-diff]");
     if (!chip) return;
     filter = chip.getAttribute("data-diff") || "all";

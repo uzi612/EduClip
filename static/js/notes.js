@@ -179,6 +179,26 @@
         }
       });
     }
+    var anki = $("exportAnki");
+    if (anki && !anki._bound) {
+      anki._bound = true;
+      anki.addEventListener("click", function () {
+        var v = currentVideo() || {};
+        var cards = (window.EDUCLIP && window.EDUCLIP.flashcards) || v.flashcards || [];
+        if (!cards.length) {
+          if (typeof showToast === "function") showToast("No flashcards to export yet.", "info");
+          return;
+        }
+        function cell(s) { return String(s == null ? "" : s).replace(/\t/g, " ").replace(/\n/g, "<br>"); }
+        var rows = cards.map(function (c) {
+          return cell(c.front) + "\t" + cell(c.back) + "\t" + cell((c.tags || []).join(", "));
+        });
+        var slug = String(v.title || "educlip-notes").toLowerCase()
+          .replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60) || "educlip-notes";
+        download(slug + "-anki.tsv", rows.join("\n"), "text/tab-separated-values;charset=utf-8");
+        if (typeof showToast === "function") showToast("Anki file downloaded (" + cards.length + " cards).", "success");
+      });
+    }
     var print = $("exportPrint");
     if (print) print.addEventListener("click", function () { window.print(); });
   }

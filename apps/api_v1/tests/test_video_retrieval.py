@@ -27,7 +27,7 @@ _ISOLATION = None
 
 from apps.analytics.models import Analytics  # noqa: E402
 from apps.flashcards.models import Flashcard  # noqa: E402
-from apps.videos.models import Chapter, Keyword, Video  # noqa: E402
+from apps.videos.models import Chapter, Keyword, TranscriptSegment, Video  # noqa: E402
 
 GRAPHS = {
     "keyword_density": {"type": "bar",
@@ -154,6 +154,28 @@ def test_analytics_passthrough_and_pending():
     v2 = _ready_video(youtube_id="9bZkp7q19f0", with_analytics=False)
     r = _client().get(f"/api/v1/video/{v2.id}/analytics")
     assert r.status_code == 404 and r.json()["error"]["code"] == "ANALYTICS_PENDING"
+
+
+def test_transcript_pagination_and_pending():
+    _clean()
+    v = _ready_video()
+    v.update(set__transcript_segments=[
+        TranscriptSegment(start=0.0, duration=3.0, text="Hello world"),
+        TranscriptSegment(start=3.0, duration=3.0, text="Second line"),
+        TranscriptSegment(start=6.0, duration=3.0, text="Third line"),
+    ])
+    c = _client()
+    first = c.get(f"/api/v1/video/{v.id}/transcript?page=1&page_size=2").json()
+    assert first["total"] == 3 and len(first["segments"]) == 2
+    assert first["segments"][0]["text"] == "Hello world"
+    second = c.get(f"/api/v1/video/{v.id}/transcript?page=2&page_size=2").json()
+    assert len(second["segments"]) == 1
+    assert second["segments"][0]["start"] == 6.0
+    bad = c.get(f"/api/v1/video/{v.id}/transcript?page=nope")
+    assert bad.status_code == 400
+    v2 = _ready_video(youtube_id="9bZkp7q19f0")
+    r = c.get(f"/api/v1/video/{v2.id}/transcript")
+    assert r.status_code == 404 and r.json()["error"]["code"] == "TRANSCRIPT_PENDING"
 
 
 def test_list_filter_search_pagination():

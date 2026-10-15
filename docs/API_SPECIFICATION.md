@@ -44,6 +44,7 @@
 | `GET` | `/video/<id>/chapters` | Chapter list only (lightweight) | None | 60/min/IP |
 | `GET` | `/video/<id>/flashcards` | Flashcards with pagination | None | 60/min/IP |
 | `GET` | `/video/<id>/analytics` | Chart.js-ready graph datasets | None | 60/min/IP |
+| `GET` | `/video/<id>/transcript` | Transcript segments with pagination (`page`, `page_size` ≤ 500; 404 `TRANSCRIPT_PENDING` when unavailable) | None | 60/min/IP |
 | `GET` | `/videos/` | Recent videos (paginated) | None | 60/min/IP |
 | `DELETE` | `/video/<id>/` | Delete video + cascaded docs | None (v1.1: owner) | 20/hour/IP |
 | `GET` | `/health` | Liveness + dependency checks | None | Unlimited |

@@ -24,6 +24,14 @@ def keyword_dict(keyword):
     return {"term": keyword.term, "score": keyword.score, "count": keyword.count}
 
 
+def segment_dict(segment):
+    return {
+        "start": float(segment.start or 0),
+        "duration": float(segment.duration or 0),
+        "text": segment.text or "",
+    }
+
+
 def flashcard_dict(card):
     return {
         "card_id": str(card.id),
@@ -118,4 +126,4 @@ def video_lookup_or_none(video_id):
 
 __all__ = ["base_video", "progress_video", "detail_video", "list_item",
            "chapter_dict", "keyword_dict", "flashcard_dict", "mcq_dict",
-           "video_lookup_or_none", "iso8601"]
+           "segment_dict", "video_lookup_or_none", "iso8601"]

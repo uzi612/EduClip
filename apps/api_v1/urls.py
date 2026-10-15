@@ -15,6 +15,8 @@ urlpatterns = [
          name="video-flashcards"),
     path("video/<str:video_id>/mcqs", retrieval.video_mcqs,
          name="video-mcqs"),
+    path("video/<str:video_id>/transcript", retrieval.video_transcript,
+         name="video-transcript"),
     path("video/<str:video_id>/analytics", retrieval.video_analytics,
          name="video-analytics"),
 ]

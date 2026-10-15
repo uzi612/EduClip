@@ -16,6 +16,13 @@
   transform: rotateY(180deg);
 }
 
+.flash-scene.known {
+  opacity: 0.72;
+}
+.flash-scene.known .flash-front {
+  border-color: rgba(16, 185, 129, 0.45);
+}
+
 .flash-face {
   position: absolute;
   inset: 0;

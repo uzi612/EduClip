@@ -116,8 +116,27 @@ html:not(.dark) .border-slate-800 {
 html:not(.dark) .text-gray-100 {
   color: #0f172a;
 }
+html:not(.dark) .text-gray-200 {
+  color: #1e293b;
+}
 html:not(.dark) .text-gray-300 {
   color: #334155;
+}
+html:not(.dark) .text-violet-300 {
+  color: #6d28d9;
+}
+html:not(.dark) .text-cyan-300,
+html:not(.dark) .text-cyan-400 {
+  color: #0e7490;
+}
+html:not(.dark) .text-amber-300 {
+  color: #92400e;
+}
+html:not(.dark) .text-emerald-300 {
+  color: #047857;
+}
+html:not(.dark) .text-red-300 {
+  color: #b91c1c;
 }
 html:not(.dark) .text-gray-400 {
   color: #64748b;
