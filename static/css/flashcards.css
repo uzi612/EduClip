@@ -33,17 +33,29 @@
   justify-content: center;
   padding: 1.5rem;
   border-radius: 1rem;
-  border: 1px solid #1e293b;
-  box-shadow: 0 20px 40px -18px rgba(0, 0, 0, 0.55);
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 20px 40px -18px rgba(15, 23, 42, 0.18);
 }
 
 .flash-front {
-  background: linear-gradient(135deg, #0f172a, #1e1b4b);
+  background: linear-gradient(135deg, #ffffff, #f5f3ff);
+  color: #0f172a;
 }
-
 .flash-back {
-  background: linear-gradient(135deg, rgba(76, 29, 149, 0.95), rgba(14, 116, 144, 0.9));
+  background: linear-gradient(135deg, #ede9fe, #cffafe);
+  color: #0f172a;
   transform: rotateY(180deg);
+}
+html.dark .flash-front {
+  background: linear-gradient(135deg, #0f172a, #1e1b4b);
+  color: #f3f4f6;
+  border-color: #1e293b;
+  box-shadow: 0 20px 40px -18px rgba(0, 0, 0, 0.55);
+}
+html.dark .flash-back {
+  background: linear-gradient(135deg, rgba(76, 29, 149, 0.95), rgba(14, 116, 144, 0.9));
+  color: #f3f4f6;
+  border-color: #1e293b;
 }
 
 .flash-scene.ring-2 {

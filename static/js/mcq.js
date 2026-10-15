@@ -59,24 +59,24 @@
   function optionHTML(q, qi, text, oi) {
     var picked = answers[qi];
     var locked = picked !== undefined && picked !== null;
-    var cls = "border-slate-800 bg-slate-900/50 hover:border-violet-500/50";
+    var cls = "border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-900/50 hover:border-violet-500/50";
     var mark = "";
     if (locked) {
       if (oi === q.answer_index) {
         cls = "border-emerald-500/60 bg-emerald-500/10";
-        mark = '<span class="ml-auto font-bold text-emerald-300" aria-hidden="true">✓</span>';
+        mark = '<span class="ml-auto font-bold text-emerald-700 dark:text-emerald-300" aria-hidden="true">✓</span>';
       } else if (oi === picked) {
         cls = "border-red-500/60 bg-red-500/10";
-        mark = '<span class="ml-auto font-bold text-red-300" aria-hidden="true">✗</span>';
+        mark = '<span class="ml-auto font-bold text-red-700 dark:text-red-300" aria-hidden="true">✗</span>';
       } else {
-        cls = "border-slate-800 bg-slate-900/50 opacity-60";
+        cls = "border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-900/50 opacity-60";
       }
     }
     return (
       '<button type="button" data-mcq="' + qi + '" data-opt="' + oi + '"' +
       (locked ? " disabled aria-disabled=\"true\"" : "") +
-      ' class="w-full flex items-center gap-3 text-left px-4 py-3 rounded-xl border text-sm transition ' + cls + '">' +
-      '<span class="grid place-items-center w-6 h-6 rounded-md bg-slate-800 text-xs font-mono shrink-0" aria-hidden="true">' +
+      ' class="w-full flex items-center gap-3 text-left px-4 py-3 rounded-xl border text-sm text-slate-800 dark:text-gray-200 transition ' + cls + '">' +
+      '<span class="grid place-items-center w-6 h-6 rounded-md bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-gray-300 text-xs font-mono shrink-0" aria-hidden="true">' +
       LETTERS[oi] + "</span>" +
       "<span>" + esc(text) + "</span>" + mark +
       "</button>"
@@ -88,12 +88,12 @@
     var locked = picked !== undefined && picked !== null;
     var correct = locked && picked === q.answer_index;
     return (
-      '<div class="rounded-2xl border border-slate-800 bg-slate-900/50 p-4 sm:p-5" data-mcq-card="' + qi + '">' +
+      '<div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 p-4 sm:p-5" data-mcq-card="' + qi + '">' +
       '<div class="flex items-start justify-between gap-2">' +
-      '<p class="font-semibold">' + esc(q.question) + "</p>" +
+      '<p class="font-semibold text-slate-900 dark:text-gray-100">' + esc(q.question) + "</p>" +
       '<button type="button" data-seek="' + esc(q.timestamp_sec || 0) + '" title="Jump to ' +
       esc(fmtStamp(q.timestamp_sec)) + ' in the video"' +
-      ' class="shrink-0 px-2 py-1 rounded-lg font-mono text-xs text-cyan-300 border border-cyan-500/30 bg-cyan-500/10 hover:border-cyan-400/60 transition">' +
+      ' class="shrink-0 px-2 py-1 rounded-lg font-mono text-xs text-cyan-700 dark:text-cyan-300 border border-cyan-500/30 bg-cyan-500/10 hover:border-cyan-400/60 transition">' +
       esc(fmtStamp(q.timestamp_sec)) + "</button></div>" +
       '<div class="mt-3 grid gap-2" role="group" aria-label="Question ' + (qi + 1) + " of " + questions.length + '">' +
       q.options.map(function (text, oi) {
@@ -103,8 +103,8 @@
       (locked
         ? '<div class="mt-3 rounded-xl px-4 py-3 text-sm ' +
           (correct
-            ? "border border-emerald-500/40 bg-emerald-500/10 text-emerald-200"
-            : "border border-red-500/40 bg-red-500/10 text-red-200") +
+            ? "border border-emerald-500/40 bg-emerald-500/10 text-emerald-800 dark:text-emerald-200"
+            : "border border-red-500/40 bg-red-500/10 text-red-800 dark:text-red-200") +
           '" role="status">' +
           "<strong>" + (correct ? "Correct. " : "Not quite. ") + "</strong>" +
           esc(q.explanation || "") + "</div>"
@@ -126,8 +126,8 @@
         empty.classList.remove("hidden");
         if (degradedMode) {
           empty.innerHTML =
-            '<p class="mt-3 font-semibold">No quiz for fallback analysis</p>' +
-            '<p class="mt-1 text-sm text-gray-400">This video used rule-based fallback ' +
+            '<p class="mt-3 font-semibold text-slate-900 dark:text-gray-100">No quiz for fallback analysis</p>' +
+            '<p class="mt-1 text-sm text-slate-500 dark:text-gray-400">This video used rule-based fallback ' +
             "instead of AI analysis, so there are no real questions to ask yet. " +
             "Re-process with an LLM key configured for the full quiz.</p>";
         }

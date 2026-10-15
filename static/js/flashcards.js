@@ -18,9 +18,9 @@
   }
 
   var DIFF_STYLE = {
-    easy: "bg-emerald-500/15 text-emerald-300 border-emerald-500/30",
-    medium: "bg-amber-500/15 text-amber-300 border-amber-500/30",
-    hard: "bg-red-500/15 text-red-300 border-red-500/30",
+    easy: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/30",
+    medium: "bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/30",
+    hard: "bg-red-500/15 text-red-700 dark:text-red-300 border-red-500/30",
   };
 
   function $(id) {
@@ -115,7 +115,7 @@
       '<div class="flash-inner">' +
       '<div class="flash-face flash-front">' +
       '<div class="flex items-center justify-between gap-2">' +
-      '<span class="text-xs font-mono text-cyan-400">' + tagBits + "</span>" +
+      '<span class="text-xs font-mono text-cyan-700 dark:text-cyan-400">' + tagBits + "</span>" +
       '<span class="px-2 py-0.5 rounded-full border text-[11px] font-mono ' + diff + '">' +
       esc(c.difficulty || "medium") +
       "</span></div>" +
@@ -125,10 +125,10 @@
       '<div class="flash-face flash-back">' +
       '<div class="text-sm leading-relaxed rich-text">' + RTF(c.back || "") + "</div>" +
       '<div class="mt-4 flex items-center gap-3">' +
-      '<button type="button" data-seek="' + esc(c.timestamp_sec || 0) + '" class="text-xs font-semibold text-cyan-300 underline underline-offset-2 self-start hover:text-cyan-200 transition">Jump to ' +
+      '<button type="button" data-seek="' + esc(c.timestamp_sec || 0) + '" class="text-xs font-semibold text-cyan-700 dark:text-cyan-300 underline underline-offset-2 self-start hover:text-cyan-800 dark:hover:text-cyan-200 transition">Jump to ' +
       esc(fmtStamp(c.timestamp_sec)) +
       "</button>" +
-      '<button type="button" data-known="' + esc(key) + '" aria-pressed="' + (known ? "true" : "false") + '" class="text-xs border border-slate-600 rounded-lg px-2 py-1 text-gray-300 hover:border-emerald-500/60 hover:text-emerald-200 transition">' +
+      '<button type="button" data-known="' + esc(key) + '" aria-pressed="' + (known ? "true" : "false") + '" class="text-xs border border-slate-300 dark:border-slate-600 rounded-lg px-2 py-1 text-slate-600 dark:text-gray-300 hover:border-emerald-500/60 hover:text-emerald-700 dark:hover:text-emerald-200 transition">' +
       (known ? "✓ Known" : "Mark known") +
       "</button>" +
       "</div></div></div></div>"
@@ -170,8 +170,8 @@
           '<button type="button" data-diff="' + lv + '" aria-pressed="' + on + '"' +
           ' class="px-3 py-1.5 rounded-full text-xs font-mono border transition ' +
           (on
-            ? "border-violet-500/60 bg-violet-500/15 text-violet-200"
-            : "border-slate-800 bg-slate-900/50 text-gray-400 hover:text-gray-100") +
+            ? "border-violet-500/60 bg-violet-500/15 text-violet-700 dark:text-violet-200"
+            : "border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-900/50 text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-gray-100") +
           '">' + lv + "</button>"
         );
       })

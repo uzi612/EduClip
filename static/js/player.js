@@ -272,7 +272,7 @@
     var out = "";
     for (var i = 0; i < 5; i++) {
       out +=
-        '<div class="p-4 rounded-xl border border-slate-800 bg-slate-900/50">' +
+        '<div class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50">' +
         '<div class="skel h-3 w-24"></div>' +
         '<div class="skel mt-2 h-4"></div>' +
         '<div class="skel mt-2 h-3 w-2/3"></div></div>';
@@ -299,36 +299,36 @@
     var dur = Math.max(0, (Number(c.end_sec) || 0) - (Number(c.start_sec) || 0));
     var keywords = (c.keyword_refs || [])
       .map(function (k) {
-        return '<span class="px-2 py-0.5 rounded-full border border-cyan-500/30 bg-cyan-500/10 text-cyan-300 text-xs font-mono">' + esc(k) + "</span>";
+        return '<span class="px-2 py-0.5 rounded-full border border-cyan-500/30 bg-cyan-500/10 text-cyan-700 dark:text-cyan-300 text-xs font-mono">' + esc(k) + "</span>";
       })
       .join("");
     return (
-      '<div class="chapter-row rounded-xl border border-slate-800 bg-slate-900/50 overflow-hidden transition">' +
+      '<div class="chapter-row rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 overflow-hidden transition">' +
       '<div class="flex items-stretch">' +
-      '<button type="button" data-seek="' + esc(c.start_sec) + '" aria-label="Play chapter: ' + esc(c.title || "Untitled chapter") + '" class="chapter-seek flex-1 min-w-0 text-left p-4 hover:bg-white/[0.02] transition group">' +
-      '<div class="flex justify-between text-sm"><span class="font-mono text-cyan-400">' +
+      '<button type="button" data-seek="' + esc(c.start_sec) + '" aria-label="Play chapter: ' + esc(c.title || "Untitled chapter") + '" class="chapter-seek flex-1 min-w-0 text-left p-4 hover:bg-violet-500/5 dark:hover:bg-white/[0.02] transition group">' +
+      '<div class="flex justify-between text-sm"><span class="font-mono text-cyan-700 dark:text-cyan-400">' +
       esc(fmtStamp(c.start_sec)) +
       '</span><span class="text-gray-500 font-mono">' +
       esc(fmtDurLen(dur)) +
       "</span></div>" +
-      '<div class="chapter-title font-semibold group-hover:text-violet-300 transition">' +
+      '<div class="chapter-title font-semibold text-slate-900 dark:text-gray-100 group-hover:text-violet-700 dark:group-hover:text-violet-300 transition">' +
       esc(c.title || "Untitled chapter") +
       "</div>" +
       (c.summary
-        ? '<p class="chapter-preview text-sm text-gray-400 line-clamp-2 mt-1">' + RT(c.summary) + "</p>"
+        ? '<p class="chapter-preview text-sm text-slate-500 dark:text-gray-400 line-clamp-2 mt-1">' + RT(c.summary) + "</p>"
         : "") +
       "</button>" +
-      '<button type="button" data-done="' + i + '" aria-pressed="false" aria-label="Mark chapter done" class="chapter-done shrink-0 self-center w-7 h-7 mr-1 rounded-full border border-slate-700 text-gray-500 hover:border-emerald-500/60 hover:text-emerald-300 transition text-sm">✓</button>' +
-      '<button type="button" class="chapter-toggle shrink-0 px-3 text-gray-500 hover:text-gray-100 transition" aria-expanded="false" aria-controls="chapter-detail-' + i + '" aria-label="Expand chapter details">' +
+      '<button type="button" data-done="' + i + '" aria-pressed="false" aria-label="Mark chapter done" class="chapter-done shrink-0 self-center w-7 h-7 mr-1 rounded-full border border-slate-300 dark:border-slate-700 text-gray-500 hover:border-emerald-500/60 hover:text-emerald-600 dark:hover:text-emerald-300 transition text-sm">✓</button>' +
+      '<button type="button" class="chapter-toggle shrink-0 px-3 text-gray-500 hover:text-slate-900 dark:hover:text-gray-100 transition" aria-expanded="false" aria-controls="chapter-detail-' + i + '" aria-label="Expand chapter details">' +
       '<svg class="chapter-chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>' +
       "</button></div>" +
       '<div id="chapter-detail-' + i + '" class="chapter-detail"><div>' +
-      '<div class="px-4 pb-4 pt-1 space-y-3 border-t border-slate-800/70">' +
-      (c.summary ? '<div class="text-sm text-gray-300 leading-relaxed rich-text">' + RT(c.summary) + "</div>" : "") +
+      '<div class="px-4 pb-4 pt-1 space-y-3 border-t border-slate-200 dark:border-slate-800/70">' +
+      (c.summary ? '<div class="text-sm text-slate-700 dark:text-gray-300 leading-relaxed rich-text">' + RT(c.summary) + "</div>" : "") +
       (keywords ? '<div class="flex flex-wrap gap-1.5">' + keywords + "</div>" : "") +
       '<div class="flex items-center justify-between gap-2">' +
       '<span class="text-xs font-mono text-gray-500">' + esc(fmtStamp(c.start_sec)) + " → " + esc(fmtStamp(c.end_sec)) + "</span>" +
-      '<button type="button" data-seek="' + esc(c.start_sec) + '" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-gradient-to-r from-violet-600 to-cyan-500 hover:opacity-90 transition whitespace-nowrap">▶ Play from ' + esc(fmtStamp(c.start_sec)) + "</button>" +
+      '<button type="button" data-seek="' + esc(c.start_sec) + '" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-gradient-to-r from-violet-600 to-cyan-500 hover:opacity-90 transition whitespace-nowrap">▶ Play from ' + esc(fmtStamp(c.start_sec)) + "</button>" +
       "</div></div></div></div></div>"
     );
   }
@@ -346,7 +346,7 @@
     if (count) count.textContent = chapters.length ? chapters.length + " chapters" : "";
     if (!wrap) return;
     if (!chapters.length) {
-      wrap.innerHTML = '<p class="text-sm text-gray-500 rounded-xl border border-dashed border-slate-800 p-6 text-center">No chapters yet for this video.</p>';
+      wrap.innerHTML = '<p class="text-sm text-gray-500 rounded-xl border border-dashed border-slate-300 dark:border-slate-800 p-6 text-center">No chapters yet for this video.</p>';
       return;
     }
     wrap.innerHTML = chapters
@@ -416,8 +416,8 @@
 
   function statPill(value, label) {
     return (
-      '<span class="inline-flex items-baseline gap-1.5 px-3 py-1.5 rounded-full border border-slate-800 bg-slate-900/70 text-sm">' +
-      '<span class="font-bold text-gray-100">' + esc(value) + "</span>" +
+      '<span class="inline-flex items-baseline gap-1.5 px-3 py-1.5 rounded-full border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/70 text-sm">' +
+      '<span class="font-bold text-slate-900 dark:text-gray-100">' + esc(value) + "</span>" +
       '<span class="text-gray-500 text-xs">' + esc(label) + "</span></span>"
     );
   }
