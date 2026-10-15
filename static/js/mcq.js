@@ -113,6 +113,8 @@
     );
   }
 
+  var degradedMode = false;
+
   function render() {
     var list = $("mcqList");
     var empty = $("mcqEmpty");
@@ -120,7 +122,16 @@
     paintScore();
     if (!questions.length) {
       list.innerHTML = "";
-      if (empty) empty.classList.remove("hidden");
+      if (empty) {
+        empty.classList.remove("hidden");
+        if (degradedMode) {
+          empty.innerHTML =
+            '<p class="mt-3 font-semibold">No quiz for fallback analysis</p>' +
+            '<p class="mt-1 text-sm text-gray-400">This video used rule-based fallback ' +
+            "instead of AI analysis, so there are no real questions to ask yet. " +
+            "Re-process with an LLM key configured for the full quiz.</p>";
+        }
+      }
       return;
     }
     if (empty) empty.classList.add("hidden");
@@ -131,6 +142,7 @@
     if (Array.isArray(list) && list.length) {
       questions = list.slice();
       answers = {};
+      degradedMode = false;
       render();
       return;
     }
@@ -140,17 +152,20 @@
         .then(function (data) {
           questions = (data && data.mcqs) || [];
           answers = {};
+          degradedMode = Boolean(data && data.degraded) && !questions.length;
           render();
         })
         .catch(function () {
           questions = [];
           answers = {};
+          degradedMode = false;
           render();
         });
       return;
     }
     questions = [];
     answers = {};
+    degradedMode = false;
     render();
   };
 

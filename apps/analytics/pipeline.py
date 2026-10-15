@@ -66,13 +66,28 @@ GENERIC_REVIEW_PROMPTS = [
 ]
 
 
-def _fallback_flashcards(chapters, full_text):
+def _chapter_lead_sentences(segments, start_sec, end_sec, max_sentences=2,
+                            max_chars=280):
+    """First sentences actually spoken inside a chapter window.
+
+    Makes degraded cards quote real video content instead of circular
+    "review the segment" filler. Returns "" when nothing usable is found.
+    """
+    texts = [str(s.get("text", "")) for s in (segments or [])
+             if start_sec <= float(s.get("start", 0)) < end_sec]
+    sentences = [s.strip() for s in re.split(r"(?<=[.!?।])\s+", " ".join(texts))
+                 if s.strip()]
+    return " ".join(sentences[:max_sentences])[:max_chars]
+
+
+def _fallback_flashcards(chapters, full_text, segments=None):
     cards = []
     for ch in chapters:
+        lead = _chapter_lead_sentences(segments, ch["start_sec"], ch["end_sec"])
         cards.append({
             "front": f"What is the main idea of '{ch['title']}'?"[:140],
-            "back": (ch.get("summary") or
-                     f"Review the segment {ch['start_sec']}s–{ch['end_sec']}s.")[:300],
+            "back": (lead or ch.get("summary")
+                     or f"Review the segment {ch['start_sec']}s–{ch['end_sec']}s.")[:300],
             "timestamp_sec": ch["start_sec"],
         })
         if len(cards) >= FLASHCARD_TARGET:
@@ -115,6 +130,20 @@ def _fallback_mcqs(chapters):
     return questions
 
 
+_UNIFORM_TITLE_RE = re.compile(r"^Part \d+ \(\d+:\d\d\)$")
+
+
+def _titles_are_generic(chapters):
+    """True when chapter titles are uniform-generated placeholders.
+
+    Label-matching quizzes built on placeholder titles are trivially circular
+    ("which label matches this timestamp?"), so degraded mode omits MCQs and
+    lets the UI show its honest empty state instead of fake questions.
+    """
+    return bool(chapters) and all(
+        _UNIFORM_TITLE_RE.match(str(c.get("title", ""))) for c in chapters)
+
+
 def degraded_analysis(segments, title, duration_sec):
     """Rule-based fallback when the LLM is unavailable. Never raises."""
     from apps.analytics.graphs import build_all_graphs
@@ -128,8 +157,9 @@ def degraded_analysis(segments, title, duration_sec):
         "summary": _extractive_summary(full_text),
         "chapters": chapters,
         "keywords": keywords,
-        "flashcards": _fallback_flashcards(chapters, full_text)[:FLASHCARD_TARGET],
-        "mcqs": _fallback_mcqs(chapters)[:MCQ_TARGET],
+        "flashcards": _fallback_flashcards(chapters, full_text, segments)[:FLASHCARD_TARGET],
+        "mcqs": [] if _titles_are_generic(chapters)
+        else _fallback_mcqs(chapters)[:MCQ_TARGET],
         "stats": stats,
         "complexity": complexity_metrics(full_text),
         "graphs": build_all_graphs(segments, keywords, chapters, duration),

@@ -104,6 +104,18 @@ def test_rescore_keywords():
     assert all(k["count"] > 0 for k in scored)
 
 
+def test_top_terms_excludes_filler_words():
+    from services.text_metrics import top_terms
+
+    # Regression: "one/what/how" once topped real-video keyword lists.
+    text = ("what one neuron does and how one layer learns "
+            "what weights do and how neurons connect. " * 8).strip()
+    terms = [k["term"] for k in top_terms(text)]
+    for filler in ("one", "what", "how", "does", "and"):
+        assert filler not in terms, terms
+    assert "neuron" in terms and "weights" in terms, terms
+
+
 def test_analyze_video_mocked_and_cached():
     from django.test.utils import override_settings
 
