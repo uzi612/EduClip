@@ -2,9 +2,45 @@
 @tailwind components;
 @tailwind utilities;
 
+/* EduClip premium tokens — single signature gradient violet→cyan */
+:root {
+  --edu-void: #030712;
+  --edu-panel: #0f172a;
+  --edu-edge: #1e293b;
+  --edu-accent: #8b5cf6;
+  --edu-accent-2: #06b6d4;
+  --edu-radius: 16px;
+  --edu-shadow-card: 0 20px 40px -18px rgba(0, 0, 0, 0.55);
+}
+
 html.dark body {
-  background: #030712;
+  background: var(--edu-void);
   color: #f3f4f6;
+}
+
+/* Staggered entrance — applied via .animate-fade-up in templates */
+@keyframes edu-fade-up {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-up {
+  animation: edu-fade-up 0.45s ease-out both;
+}
+
+.edu-gradient-text {
+  background: linear-gradient(100deg, #a78bfa, #22d3ee);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.edu-card {
+  border-radius: var(--edu-radius);
+  border: 1px solid var(--edu-edge);
+  background: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow: var(--edu-shadow-card);
 }
 
 /* Guard against horizontal scroll on 360px mobile (SETUP-02 acceptance) */

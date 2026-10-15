@@ -18,7 +18,7 @@
       </div>
       <h1 class="font-display mt-6 text-4xl sm:text-5xl font-extrabold tracking-tight text-slate-900 dark:text-gray-100">
         Turn Any YouTube Video Into Your Personal
-        <span class="bg-gradient-to-r from-blue-700 via-indigo-600 to-purple-600 bg-clip-text text-transparent">Learning Assistant</span>
+        <span class="edu-gradient-text">Learning Assistant</span>
       </h1>
       <p class="mt-4 text-slate-600 dark:text-gray-400 max-w-xl mx-auto lg:mx-0 leading-relaxed">
         Get AI-generated chapter summaries, interactive notes, and smart flashcards — all from a simple YouTube link.
@@ -59,10 +59,18 @@
         <button type="button" data-demo="https://www.youtube.com/watch?v=dQw4w9WgXcQ" class="demo-chip">Spec sample video</button>
       </div>
 
+      <div class="mt-6 flex flex-wrap items-center justify-center lg:justify-start gap-x-5 gap-y-2 text-sm text-slate-500 dark:text-gray-500" aria-label="Highlights">
+        <span><strong class="text-slate-900 dark:text-gray-100 font-semibold">~60s</strong> median analysis</span>
+        <span aria-hidden="true" class="text-slate-300 dark:text-slate-700">·</span>
+        <span>Chapters + flashcards + analytics</span>
+        <span aria-hidden="true" class="text-slate-300 dark:text-slate-700">·</span>
+        <span>Free prototype</span>
+      </div>
+
       <div id="progressWrap" class="hidden mt-6 max-w-xl mx-auto lg:mx-0" aria-live="polite">
         <div class="flex justify-between text-sm text-slate-500 dark:text-gray-400"><span id="progressLabel">Fetching transcript…</span><span id="progressPct" class="font-mono">5%</span></div>
         <div class="h-2 mt-2 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden">
-          <div id="progressBar" class="h-full w-0 bg-gradient-to-r from-blue-600 to-purple-600 transition-all duration-500"></div>
+          <div id="progressBar" class="h-full w-0 bg-gradient-to-r from-violet-600 to-cyan-500 transition-all duration-500"></div>
         </div>
       </div>
     </div>
@@ -156,31 +164,6 @@
   </div>
 </section>
 
-<!-- ================= PRICING ================= -->
-<section id="pricing" class="mt-16 scroll-mt-20" aria-label="Pricing">
-  <div class="text-center max-w-xl mx-auto">
-    <p class="text-xs font-bold tracking-widest text-violet-600 dark:text-violet-400">PRICING</p>
-    <h2 class="font-display mt-2 text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-gray-100">Start free, upgrade when ready</h2>
-  </div>
-  <div class="grid sm:grid-cols-3 gap-4 mt-8 text-left">
-    <div class="feature-card">
-      <h3 class="font-semibold text-slate-900 dark:text-gray-100">Starter</h3>
-      <p class="mt-1 text-3xl font-extrabold text-slate-900 dark:text-gray-100">$0</p>
-      <p class="mt-2 text-sm text-slate-600 dark:text-gray-400">5 videos a month, chapters + flashcards.</p>
-    </div>
-    <div class="feature-card pricing-highlight">
-      <h3 class="font-semibold text-slate-900 dark:text-gray-100">Pro</h3>
-      <p class="mt-1 text-3xl font-extrabold text-slate-900 dark:text-gray-100">$9<span class="text-base font-medium text-slate-500">/mo</span></p>
-      <p class="mt-2 text-sm text-slate-600 dark:text-gray-400">Unlimited videos, analytics, exports.</p>
-    </div>
-    <div class="feature-card">
-      <h3 class="font-semibold text-slate-900 dark:text-gray-100">Team</h3>
-      <p class="mt-1 text-3xl font-extrabold text-slate-900 dark:text-gray-100">$29<span class="text-base font-medium text-slate-500">/mo</span></p>
-      <p class="mt-2 text-sm text-slate-600 dark:text-gray-400">Shared workspaces and classrooms.</p>
-    </div>
-  </div>
-</section>
-
 <!-- ================= CTA BANNER ================= -->
 <section class="cta-banner mt-16" aria-label="Get started">
   <div class="grid lg:grid-cols-2 gap-8 items-center">
@@ -211,9 +194,8 @@
 </section>
 
 <!-- ================= ABOUT ================= -->
-<section id="about" class="mt-16 scroll-mt-20 rounded-3xl border border-slate-200 dark:border-slate-800 bg-white/70 dark:bg-slate-900/50 p-8 text-center" aria-label="About">
-  <h2 class="font-display text-xl font-extrabold tracking-tight text-slate-900 dark:text-gray-100">About EduClip</h2>
-  <p class="mt-2 text-sm text-slate-600 dark:text-gray-400 max-w-2xl mx-auto">EduClip is an open-source study companion: paste a YouTube link and get chapters, summaries, flashcards, and visual analytics. Built with Django, MongoDB Atlas, Tailwind CSS, and Chart.js.</p>
+<section id="about" class="mt-16 scroll-mt-20 text-center" aria-label="About">
+  <p class="text-sm text-slate-500 dark:text-gray-500 max-w-2xl mx-auto">EduClip is an open-source study companion — chapters, summaries, flashcards, and analytics from any YouTube link. Built with Django, MongoDB Atlas, Tailwind CSS, and Chart.js.</p>
 </section>
 
 <!-- ================= RECENT ================= -->
