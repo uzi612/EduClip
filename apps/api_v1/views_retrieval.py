@@ -134,6 +134,7 @@ def video_mcqs(request, video_id):
     return _cached_response({
         "video_id": str(video.id),
         "total": len(questions),
+        "degraded": bool(video.degraded),
         "mcqs": [mcq_dict(q) for q in questions],
     })
 

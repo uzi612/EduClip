@@ -72,6 +72,36 @@ def test_degraded_mcqs_rotate_keys_and_pad_deck():
     assert len(cards) >= pipeline_mod.MIN_FLASHCARDS  # short-video floor of 5
 
 
+def test_fallback_flashcards_quote_real_content():
+    chapters = [{"index": 0, "title": "Part 1 (0:00)", "start_sec": 0, "end_sec": 300,
+                 "summary": "", "keyword_refs": []}]
+    segs = [{"start": 10.0, "duration": 5.0, "text": "Neurons pass signals onward."},
+            {"start": 400.0, "duration": 5.0, "text": "Weights tune the response."}]
+    cards = pipeline_mod._fallback_flashcards(chapters, "ignored full text", segs)
+    assert cards[0]["back"].startswith("Neurons pass signals onward."), cards[0]
+    # No usable sentences in range -> honest generic fallback, never empty.
+    cards = pipeline_mod._fallback_flashcards(chapters, "", [])
+    assert cards[0]["back"], cards[0]
+
+
+def test_degraded_suppresses_trivial_mcqs_and_flags_endpoint():
+    segs = [{"start": float(i * 10), "duration": 10.0,
+             "text": f"Lesson segment {i} about alpha."} for i in range(60)]
+    out = pipeline_mod.degraded_analysis(segs, "T", 600)
+    assert out["mcqs"] == []  # uniform titles would make label-matching filler
+    assert len(out["flashcards"]) >= pipeline_mod.MIN_FLASHCARDS
+    _clean()
+    from apps.videos.video_service import get_or_create_video
+
+    video, _ = get_or_create_video("dQw4w9WgXcQ", META)
+    video.update(set__status="ready", set__degraded=True)
+    client = APIClient(HTTP_HOST="testserver")
+    with override_settings(MONGODB_ATLAS_URI=""):
+        body = client.get(f"/api/v1/video/{video.id}/mcqs",
+                          HTTP_HOST="testserver").json()
+    assert body == {"video_id": str(video.id), "total": 0, "degraded": True, "mcqs": []}
+
+
 def test_task_persists_mcqs_and_endpoint_serves():
     from apps.videos.tasks import process_video_task
     from apps.videos.video_service import get_or_create_video
