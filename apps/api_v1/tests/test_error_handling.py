@@ -137,12 +137,14 @@ def test_llm_backoff_is_exponential_with_jitter():
     llm_client.clear_cache()
     segs = [{"start": 0.0, "duration": 5.0, "text": "atp"}]
     sleeps = []
+    # Pin provider: dispatch otherwise follows local LLM_PROVIDER and the test
+    # would hit the live network instead of the mocked transport.
     with patch.object(llm_client, "_call_openai",
                       side_effect=LLMError("timeout", retryable=True)), patch(
         "random.uniform", return_value=0.0), patch(
         "services.llm_client.time.sleep", side_effect=lambda s: sleeps.append(s)):
         try:
-            llm_client.analyze_video(segs, "T", use_cache=False)
+            llm_client.analyze_video(segs, "T", provider="openai", use_cache=False)
         except LLMError:
             pass
         else:

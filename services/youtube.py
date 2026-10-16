@@ -9,6 +9,7 @@ youtube-transcript-api is imported lazily so `manage.py check` works without
 optional ingestion dependencies installed.
 """
 import logging
+import os
 import re
 import time
 from concurrent.futures import ThreadPoolExecutor
@@ -16,6 +17,53 @@ from concurrent.futures import TimeoutError as FuturesTimeoutError
 from urllib.parse import parse_qs, urlparse
 
 logger = logging.getLogger(__name__)
+
+# Player clients tried in order by every yt-dlp call. The android
+# embedded-player client is far less likely to be challenged
+# ("Sign in to confirm you're not a bot") than web; web stays as fallback
+# for formats android cannot serve. Requires yt-dlp>=2025.1 for fallbacks.
+YOUTUBE_PLAYER_CLIENTS = ("android", "web")
+
+#: Env var pointing at a Netscape-format cookies.txt for authenticated
+#: yt-dlp calls (server deployments behind bot-checks).
+COOKIES_ENV_VAR = "YOUTUBE_COOKIES_PATH"
+
+#: Env var overriding the ffmpeg binary directory (server processes often
+#: start with a stale PATH that misses newly installed tools).
+FFMPEG_ENV_VAR = "FFMPEG_LOCATION"
+
+#: Substrings marking a YouTube bot-check (vs. other yt-dlp failures).
+BOTCHECK_MARKERS = (
+    "sign in to confirm you're not a bot",
+    "sign in to confirm you’re not a bot",
+)
+
+
+def _ytdlp_opts(extra=None):
+    """Hardened base options for every yt-dlp call in this project."""
+    opts = {
+        "quiet": True,
+        "no_warnings": True,
+        "no_playlist": True,
+        "socket_timeout": 25,
+        "retries": 2,
+        "extractor_args": {"youtube": {"player_client": list(YOUTUBE_PLAYER_CLIENTS)}},
+    }
+    cookies = os.getenv(COOKIES_ENV_VAR, "") or ""
+    if cookies and os.path.isfile(cookies):
+        opts["cookiefile"] = cookies
+    ffmpeg_dir = os.getenv(FFMPEG_ENV_VAR, "") or ""
+    if ffmpeg_dir and os.path.isdir(ffmpeg_dir):
+        opts["ffmpeg_location"] = ffmpeg_dir
+    if extra:
+        opts.update(extra)
+    return opts
+
+
+def is_botcheck_error(message):
+    """True when a yt-dlp failure looks like a YouTube bot-check."""
+    lowered = str(message or "").lower()
+    return any(m in lowered for m in BOTCHECK_MARKERS)
 
 VIDEO_ID_PATTERN = r"[A-Za-z0-9_-]{11}"
 VIDEO_ID_RE = re.compile(rf"^({VIDEO_ID_PATTERN})$")
@@ -373,8 +421,7 @@ def _metadata_without_key(youtube_id, meta):
         yt_dlp_error = "yt-dlp is not installed."
     else:
         try:
-            with yt_dlp.YoutubeDL({"quiet": True, "no_warnings": True,
-                                    "socket_timeout": 20}) as ydl:
+            with yt_dlp.YoutubeDL(_ytdlp_opts()) as ydl:
                 info = ydl.extract_info(
                     f"https://www.youtube.com/watch?v={youtube_id}", download=False) or {}
             meta.update({
@@ -401,10 +448,15 @@ def _metadata_without_key(youtube_id, meta):
     except Exception:
         pass
     if meta["duration_sec"] <= 0:
-        hint = ("install yt-dlp or set YOUTUBE_API_KEY"
-                if yt_dlp_error == "yt-dlp is not installed."
-                else f"page extract failed ({yt_dlp_error}); retry later or set "
-                     "YOUTUBE_API_KEY")
+        if yt_dlp_error == "yt-dlp is not installed.":
+            hint = "install yt-dlp or set YOUTUBE_API_KEY"
+        elif is_botcheck_error(yt_dlp_error):
+            hint = ("YouTube bot-check blocked the page extract (tried web+android "
+                    "clients); set YOUTUBE_COOKIES_PATH to an authenticated "
+                    "cookies.txt, set YOUTUBE_API_KEY, or retry later")
+        else:
+            hint = (f"page extract failed ({yt_dlp_error}); retry later or set "
+                    "YOUTUBE_API_KEY")
         raise TranscriptUnavailableError(
             f"Could not determine duration for video {youtube_id}: {hint}.",
             retryable=yt_dlp_error != "yt-dlp is not installed.",
