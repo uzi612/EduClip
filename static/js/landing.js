@@ -193,7 +193,7 @@
     var out = "";
     for (var i = 0; i < 6; i++) {
       out +=
-        '<div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 overflow-hidden">' +
+        '<div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 overflow-hidden shadow-sm">' +
         '<div class="skel skel-aspect-video"></div>' +
         '<div class="p-4 space-y-2"><div class="skel h-4"></div>' +
         '<div class="skel h-3 w-2/3"></div></div></div>';
@@ -207,7 +207,7 @@
       v.thumbnail ||
       (v.youtube_id ? "https://i.ytimg.com/vi/" + v.youtube_id + "/hqdefault.jpg" : "");
     return (
-      '<a href="/watch/' + esc(v.video_id) + '/" class="group rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 overflow-hidden hover:border-violet-500/50 transition shadow-sm hover:shadow-lg">' +
+      '<a href="/watch/' + esc(v.video_id) + '/" class="group rounded-2xl border border-slate-200 dark:border-slate-800 bg-gradient-to-b from-white to-violet-50/60 dark:bg-slate-900/50 dark:bg-none overflow-hidden shadow-sm ring-1 ring-slate-900/5 dark:ring-0 hover:shadow-xl hover:-translate-y-1 hover:border-violet-400/60 dark:hover:border-violet-500/50 transition">' +
       '<div class="relative aspect-video bg-black">' +
       (thumb
         ? '<img src="' + esc(thumb) + '" alt="" loading="lazy" class="w-full h-full object-cover group-hover:opacity-90 transition" />'

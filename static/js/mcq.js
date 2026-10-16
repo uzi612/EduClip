@@ -59,7 +59,7 @@
   function optionHTML(q, qi, text, oi) {
     var picked = answers[qi];
     var locked = picked !== undefined && picked !== null;
-    var cls = "border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-900/50 hover:border-violet-500/50";
+    var cls = "border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-900/50 shadow-sm hover:shadow-md hover:border-violet-400/60 dark:hover:border-violet-500/50";
     var mark = "";
     if (locked) {
       if (oi === q.answer_index) {
@@ -88,7 +88,7 @@
     var locked = picked !== undefined && picked !== null;
     var correct = locked && picked === q.answer_index;
     return (
-      '<div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 p-4 sm:p-5" data-mcq-card="' + qi + '">' +
+      '<div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-gradient-to-b from-white to-violet-50/40 dark:bg-slate-900/50 dark:bg-none p-4 sm:p-5 shadow-sm ring-1 ring-slate-900/5 dark:ring-0" data-mcq-card="' + qi + '">' +
       '<div class="flex items-start justify-between gap-2">' +
       '<p class="font-semibold text-slate-900 dark:text-gray-100">' + esc(q.question) + "</p>" +
       '<button type="button" data-seek="' + esc(q.timestamp_sec || 0) + '" title="Jump to ' +

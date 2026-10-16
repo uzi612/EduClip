@@ -303,7 +303,7 @@
       })
       .join("");
     return (
-      '<div class="chapter-row rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 overflow-hidden transition">' +
+      '<div class="chapter-row rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 overflow-hidden shadow-sm hover:shadow-md transition">' +
       '<div class="flex items-stretch">' +
       '<button type="button" data-seek="' + esc(c.start_sec) + '" aria-label="Play chapter: ' + esc(c.title || "Untitled chapter") + '" class="chapter-seek flex-1 min-w-0 text-left p-4 hover:bg-violet-500/5 dark:hover:bg-white/[0.02] transition group">' +
       '<div class="flex justify-between text-sm"><span class="font-mono text-cyan-700 dark:text-cyan-400">' +
@@ -416,7 +416,7 @@
 
   function statPill(value, label) {
     return (
-      '<span class="inline-flex items-baseline gap-1.5 px-3 py-1.5 rounded-full border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/70 text-sm">' +
+      '<span class="inline-flex items-baseline gap-1.5 px-3 py-1.5 rounded-full border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/70 text-sm shadow-sm">' +
       '<span class="font-bold text-slate-900 dark:text-gray-100">' + esc(value) + "</span>" +
       '<span class="text-gray-500 text-xs">' + esc(label) + "</span></span>"
     );
@@ -441,7 +441,7 @@
 
   function transcriptRow(s, i) {
     return '<button type="button" data-seek="' + esc(Math.floor(s.start || 0)) + '" data-tline="' + i + '"' +
-      ' class="transcript-row w-full flex gap-3 text-left px-3 py-2 rounded-lg text-sm hover:bg-violet-500/10 transition">' +
+      ' class="transcript-row w-full flex gap-3 text-left px-3 py-2 rounded-lg text-sm border border-transparent hover:border-violet-300/60 hover:bg-violet-50 dark:hover:bg-violet-500/10 transition">' +
       '<span class="font-mono text-cyan-600 dark:text-cyan-400 shrink-0">' + esc(fmtStamp(s.start)) + "</span>" +
       '<span class="text-slate-700 dark:text-gray-300">' + esc(s.text || "") + "</span></button>";
   }
