@@ -466,6 +466,18 @@ html.dark #features .feature-card:nth-child(4) {
   border-color: rgba(139, 92, 246, 0.45);
   box-shadow: var(--edu-shadow-lift);
 }
+/* How-it-works steps: one uniform, quiet-premium surface on all three —
+   a whisper of cool neutral that lets the bold cards above carry the color. */
+#how-it-works .feature-card {
+  background: linear-gradient(180deg, #ffffff 0%, #f6f7fb 100%);
+  border-color: #e4e7f0;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05), 0 16px 38px -18px rgba(15, 23, 42, 0.25);
+}
+html.dark #how-it-works .feature-card {
+  background: linear-gradient(180deg, rgba(30, 41, 59, 0.55), rgba(15, 23, 42, 0.75));
+  border-color: #26313f;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 18px 40px -20px rgba(0, 0, 0, 0.6);
+}
 html.dark .feature-card {
   border-color: #1e293b;
   background: rgba(15, 23, 42, 0.7);
