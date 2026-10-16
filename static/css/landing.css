@@ -381,73 +381,40 @@ html.dark .mock-a {
 
 /* ---------- feature + pricing cards ---------- */
 .feature-card {
-  position: relative;
-  overflow: hidden;
   border-radius: var(--edu-radius-lg);
   border: 1px solid #e2e8f0;
   background: linear-gradient(180deg, #ffffff, #fafaff);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   padding: 1.5rem;
-  padding-top: calc(1.5rem + 3px);
   box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05), 0 12px 32px -12px rgba(15, 23, 42, 0.18);
   transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
 }
-.feature-card::before {
-  content: "";
-  position: absolute;
-  top: 10px;
-  left: 16px;
-  right: 16px;
-  height: 4px;
-  border-radius: 9999px;
-  background: linear-gradient(90deg, #8b5cf6, #22d3ee);
-  box-shadow: 0 4px 14px -2px rgba(139, 92, 246, 0.55);
+/* Signature treatment for the top-4 feature cards: one unified violet→cyan
+   identity on all four (scoped to #features so how-it-works keeps its style). */
+#features .feature-card {
+  background:
+    radial-gradient(24rem 10rem at 50% -4rem, rgba(139, 92, 246, 0.14), transparent 70%),
+    linear-gradient(180deg, #ffffff 0%, #f5f3ff 100%);
+  border-color: rgba(139, 92, 246, 0.35);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05), 0 20px 45px -18px rgba(124, 58, 237, 0.45);
 }
-/* Per-card hue matched to the card's badge (falls back to signature gradient). */
-.feature-card:has(.badge-blue)::before {
-  background: linear-gradient(90deg, #3b82f6, #22d3ee);
-  box-shadow: 0 4px 14px -2px rgba(59, 130, 246, 0.55);
+#features .feature-card .feature-badge {
+  background: linear-gradient(135deg, #ede9fe, #cffafe);
+  color: #6d28d9;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7), 0 6px 14px -6px rgba(124, 58, 237, 0.5);
 }
-.feature-card:has(.badge-violet)::before {
-  background: linear-gradient(90deg, #8b5cf6, #d946ef);
-  box-shadow: 0 4px 14px -2px rgba(139, 92, 246, 0.55);
+html.dark #features .feature-card {
+  background:
+    radial-gradient(24rem 10rem at 50% -4rem, rgba(139, 92, 246, 0.22), transparent 70%),
+    linear-gradient(180deg, rgba(30, 27, 75, 0.65), rgba(15, 23, 42, 0.85));
+  border-color: rgba(139, 92, 246, 0.45);
+  box-shadow: 0 0 0 1px rgba(139, 92, 246, 0.12), 0 24px 50px -20px rgba(139, 92, 246, 0.5);
 }
-.feature-card:has(.badge-rose)::before {
-  background: linear-gradient(90deg, #f43f5e, #fb923c);
-  box-shadow: 0 4px 14px -2px rgba(244, 63, 94, 0.5);
-}
-.feature-card:has(.badge-emerald)::before {
-  background: linear-gradient(90deg, #10b981, #22d3ee);
-  box-shadow: 0 4px 14px -2px rgba(16, 185, 129, 0.5);
-}
-.feature-card:has(.badge-amber)::before {
-  background: linear-gradient(90deg, #f59e0b, #f43f5e);
-  box-shadow: 0 4px 14px -2px rgba(245, 158, 11, 0.5);
-}
-html.dark .feature-card::before {
-  background: linear-gradient(90deg, #a78bfa, #22d3ee);
-  box-shadow: 0 0 16px 0 rgba(139, 92, 246, 0.65);
-}
-html.dark .feature-card:has(.badge-blue)::before {
-  background: linear-gradient(90deg, #60a5fa, #22d3ee);
-  box-shadow: 0 0 16px 0 rgba(59, 130, 246, 0.65);
-}
-html.dark .feature-card:has(.badge-violet)::before {
-  background: linear-gradient(90deg, #a78bfa, #e879f9);
-  box-shadow: 0 0 16px 0 rgba(167, 139, 250, 0.65);
-}
-html.dark .feature-card:has(.badge-rose)::before {
-  background: linear-gradient(90deg, #fb7185, #fdba74);
-  box-shadow: 0 0 16px 0 rgba(251, 113, 133, 0.6);
-}
-html.dark .feature-card:has(.badge-emerald)::before {
-  background: linear-gradient(90deg, #34d399, #22d3ee);
-  box-shadow: 0 0 16px 0 rgba(52, 211, 153, 0.6);
-}
-html.dark .feature-card:has(.badge-amber)::before {
-  background: linear-gradient(90deg, #fbbf24, #fb7185);
-  box-shadow: 0 0 16px 0 rgba(251, 191, 36, 0.6);
+html.dark #features .feature-card .feature-badge {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.25), rgba(34, 211, 238, 0.18));
+  color: #c4b5fd;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 6px 14px -6px rgba(139, 92, 246, 0.6);
 }
 .feature-card:hover {
   transform: translateY(-3px);
