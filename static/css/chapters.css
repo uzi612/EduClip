@@ -24,6 +24,17 @@
   box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.55), 0 12px 28px -14px rgba(139, 92, 246, 0.5);
 }
 
+.chapter-row.done .chapter-title {
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+  opacity: 0.75;
+}
+.chapter-done.done-on {
+  border-color: rgba(16, 185, 129, 0.6);
+  background: rgba(16, 185, 129, 0.15);
+  color: #6ee7b7;
+}
+
 .chapter-chev {
   transition: transform 0.25s ease-out;
 }

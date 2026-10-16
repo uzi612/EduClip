@@ -12,6 +12,7 @@ from apps.api_v1.presenters import (
     list_item,
     mcq_dict,
     progress_video,
+    segment_dict,
     video_lookup_or_none,
 )
 
@@ -136,6 +137,41 @@ def video_mcqs(request, video_id):
         "total": len(questions),
         "degraded": bool(video.degraded),
         "mcqs": [mcq_dict(q) for q in questions],
+    })
+
+
+@api_view(["GET"])
+def video_transcript(request, video_id):
+    """Paginated transcript segments (additive; detail payload stays light)."""
+    guard = _db_guarded(request)
+    if guard is not None:
+        return guard
+    video = video_lookup_or_none(video_id)
+    if video is None:
+        return _not_found(request)
+    try:
+        page = max(1, int(request.query_params.get("page", 1)))
+        page_size = min(500, max(1, int(request.query_params.get("page_size", 200))))
+    except (TypeError, ValueError):
+        return Response({"error": {"code": "VALIDATION_ERROR",
+                                    "message": "page and page_size must be integers.",
+                                    "details": {}, "request_id": request_id_of(request),
+                                    "retryable": False}}, status=400)
+    segments = list(video.transcript_segments or [])
+    if not segments:
+        return Response({"error": {"code": "TRANSCRIPT_PENDING",
+                                    "message": "Transcript is not available yet. Poll again.",
+                                    "details": {}, "request_id": request_id_of(request),
+                                    "retryable": True}}, status=404)
+    total = len(segments)
+    start = (page - 1) * page_size
+    window = segments[start:start + page_size]
+    return _cached_response({
+        "video_id": str(video.id),
+        "page": page,
+        "page_size": page_size,
+        "total": total,
+        "segments": [segment_dict(s) for s in window],
     })
 
 
