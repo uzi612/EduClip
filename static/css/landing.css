@@ -390,112 +390,76 @@ html.dark .mock-a {
   box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05), 0 12px 32px -12px rgba(15, 23, 42, 0.18);
   transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
 }
-/* Signature treatment for the top-4 feature cards: each card carries its own
-   color drawn from the app's violet→cyan identity (scoped to #features so
-   how-it-works keeps its style). Card order: 1 violet, 2 cyan, 3 fuchsia, 4 indigo. */
+/* Signature treatment for the top-4 feature cards: rich gradient backgrounds
+   drawn from the app's violet→cyan identity (scoped to #features so
+   how-it-works keeps its style). Card order: 1 violet, 2 cyan, 3 fuchsia, 4 indigo.
+   Light theme uses deep gradients with light text; dark theme deepens further. */
 #features .feature-card {
-  border-color: rgba(139, 92, 246, 0.35);
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05), 0 20px 45px -18px rgba(124, 58, 237, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.2), 0 24px 50px -18px rgba(76, 29, 149, 0.55);
 }
 #features .feature-card:nth-child(1) {
   background:
-    radial-gradient(24rem 10rem at 50% -4rem, rgba(139, 92, 246, 0.16), transparent 70%),
-    linear-gradient(180deg, #ffffff 0%, #f5f3ff 100%);
+    radial-gradient(20rem 9rem at 50% -3rem, rgba(255, 255, 255, 0.22), transparent 70%),
+    linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%);
 }
 #features .feature-card:nth-child(2) {
   background:
-    radial-gradient(24rem 10rem at 50% -4rem, rgba(34, 211, 238, 0.16), transparent 70%),
-    linear-gradient(180deg, #ffffff 0%, #ecfeff 100%);
-  border-color: rgba(6, 182, 212, 0.35);
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05), 0 20px 45px -18px rgba(6, 182, 212, 0.4);
+    radial-gradient(20rem 9rem at 50% -3rem, rgba(255, 255, 255, 0.22), transparent 70%),
+    linear-gradient(135deg, #0891b2 0%, #155e75 100%);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.2), 0 24px 50px -18px rgba(8, 145, 178, 0.55);
 }
 #features .feature-card:nth-child(3) {
   background:
-    radial-gradient(24rem 10rem at 50% -4rem, rgba(217, 70, 239, 0.14), transparent 70%),
-    linear-gradient(180deg, #ffffff 0%, #fdf4ff 100%);
-  border-color: rgba(217, 70, 239, 0.32);
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05), 0 20px 45px -18px rgba(217, 70, 239, 0.4);
+    radial-gradient(20rem 9rem at 50% -3rem, rgba(255, 255, 255, 0.22), transparent 70%),
+    linear-gradient(135deg, #a21caf 0%, #701a75 100%);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.2), 0 24px 50px -18px rgba(162, 28, 175, 0.55);
 }
 #features .feature-card:nth-child(4) {
   background:
-    radial-gradient(24rem 10rem at 50% -4rem, rgba(99, 102, 241, 0.16), transparent 70%),
-    linear-gradient(180deg, #ffffff 0%, #eef2ff 100%);
-  border-color: rgba(99, 102, 241, 0.35);
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05), 0 20px 45px -18px rgba(99, 102, 241, 0.45);
+    radial-gradient(20rem 9rem at 50% -3rem, rgba(255, 255, 255, 0.22), transparent 70%),
+    linear-gradient(135deg, #4f46e5 0%, #312e81 100%);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.2), 0 24px 50px -18px rgba(79, 70, 229, 0.55);
+}
+#features .feature-card h3 {
+  color: #ffffff;
+}
+#features .feature-card p {
+  color: rgba(255, 255, 255, 0.85);
 }
 #features .feature-card .feature-badge {
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7), 0 6px 14px -6px rgba(124, 58, 237, 0.5);
-}
-#features .feature-card:nth-child(1) .feature-badge {
-  background: linear-gradient(135deg, #ede9fe, #ddd6fe);
-  color: #6d28d9;
-}
-#features .feature-card:nth-child(2) .feature-badge {
-  background: linear-gradient(135deg, #cffafe, #a5f3fc);
-  color: #0e7490;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7), 0 6px 14px -6px rgba(6, 182, 212, 0.5);
-}
-#features .feature-card:nth-child(3) .feature-badge {
-  background: linear-gradient(135deg, #fae8ff, #f5d0fe);
-  color: #a21caf;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7), 0 6px 14px -6px rgba(217, 70, 239, 0.5);
-}
-#features .feature-card:nth-child(4) .feature-badge {
-  background: linear-gradient(135deg, #e0e7ff, #c7d2fe);
-  color: #4338ca;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7), 0 6px 14px -6px rgba(99, 102, 241, 0.5);
+  background: rgba(255, 255, 255, 0.18);
+  color: #ffffff;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 6px 14px -6px rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
 html.dark #features .feature-card {
-  border-color: rgba(139, 92, 246, 0.45);
-  box-shadow: 0 0 0 1px rgba(139, 92, 246, 0.12), 0 24px 50px -20px rgba(139, 92, 246, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.14);
 }
 html.dark #features .feature-card:nth-child(1) {
   background:
-    radial-gradient(24rem 10rem at 50% -4rem, rgba(139, 92, 246, 0.24), transparent 70%),
-    linear-gradient(180deg, rgba(30, 27, 75, 0.65), rgba(15, 23, 42, 0.85));
+    radial-gradient(20rem 9rem at 50% -3rem, rgba(167, 139, 250, 0.35), transparent 70%),
+    linear-gradient(135deg, #5b21b6 0%, #2e1065 100%);
+  box-shadow: 0 0 0 1px rgba(139, 92, 246, 0.15), 0 24px 55px -18px rgba(139, 92, 246, 0.6);
 }
 html.dark #features .feature-card:nth-child(2) {
   background:
-    radial-gradient(24rem 10rem at 50% -4rem, rgba(34, 211, 238, 0.18), transparent 70%),
-    linear-gradient(180deg, rgba(8, 51, 68, 0.55), rgba(15, 23, 42, 0.85));
-  border-color: rgba(34, 211, 238, 0.4);
-  box-shadow: 0 0 0 1px rgba(34, 211, 238, 0.1), 0 24px 50px -20px rgba(34, 211, 238, 0.4);
+    radial-gradient(20rem 9rem at 50% -3rem, rgba(103, 232, 249, 0.28), transparent 70%),
+    linear-gradient(135deg, #0e7490 0%, #083344 100%);
+  box-shadow: 0 0 0 1px rgba(34, 211, 238, 0.12), 0 24px 55px -18px rgba(34, 211, 238, 0.45);
 }
 html.dark #features .feature-card:nth-child(3) {
   background:
-    radial-gradient(24rem 10rem at 50% -4rem, rgba(217, 70, 239, 0.2), transparent 70%),
-    linear-gradient(180deg, rgba(59, 15, 74, 0.55), rgba(15, 23, 42, 0.85));
-  border-color: rgba(217, 70, 239, 0.4);
-  box-shadow: 0 0 0 1px rgba(217, 70, 239, 0.1), 0 24px 50px -20px rgba(217, 70, 239, 0.4);
+    radial-gradient(20rem 9rem at 50% -3rem, rgba(240, 171, 252, 0.3), transparent 70%),
+    linear-gradient(135deg, #701a75 0%, #3b0764 100%);
+  box-shadow: 0 0 0 1px rgba(217, 70, 239, 0.12), 0 24px 55px -18px rgba(217, 70, 239, 0.45);
 }
 html.dark #features .feature-card:nth-child(4) {
   background:
-    radial-gradient(24rem 10rem at 50% -4rem, rgba(99, 102, 241, 0.24), transparent 70%),
-    linear-gradient(180deg, rgba(30, 27, 117, 0.55), rgba(15, 23, 42, 0.85));
-  border-color: rgba(99, 102, 241, 0.45);
-  box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.12), 0 24px 50px -20px rgba(99, 102, 241, 0.5);
-}
-html.dark #features .feature-card .feature-badge {
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 6px 14px -6px rgba(139, 92, 246, 0.6);
-}
-html.dark #features .feature-card:nth-child(1) .feature-badge {
-  background: linear-gradient(135deg, rgba(139, 92, 246, 0.28), rgba(34, 211, 238, 0.16));
-  color: #c4b5fd;
-}
-html.dark #features .feature-card:nth-child(2) .feature-badge {
-  background: linear-gradient(135deg, rgba(34, 211, 238, 0.25), rgba(34, 211, 238, 0.12));
-  color: #67e8f9;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 6px 14px -6px rgba(34, 211, 238, 0.55);
-}
-html.dark #features .feature-card:nth-child(3) .feature-badge {
-  background: linear-gradient(135deg, rgba(217, 70, 239, 0.25), rgba(217, 70, 239, 0.12));
-  color: #f0abfc;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 6px 14px -6px rgba(217, 70, 239, 0.55);
-}
-html.dark #features .feature-card:nth-child(4) .feature-badge {
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.28), rgba(99, 102, 241, 0.14));
-  color: #a5b4fc;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 6px 14px -6px rgba(99, 102, 241, 0.6);
+    radial-gradient(20rem 9rem at 50% -3rem, rgba(165, 180, 252, 0.32), transparent 70%),
+    linear-gradient(135deg, #3730a3 0%, #1e1b4b 100%);
+  box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.15), 0 24px 55px -18px rgba(99, 102, 241, 0.55);
 }
 .feature-card:hover {
   transform: translateY(-3px);
