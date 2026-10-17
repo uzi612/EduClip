@@ -225,9 +225,9 @@ function showToast(message, type, action) {
   const wrap = document.getElementById("toastWrap");
   if (!wrap) return;
   const colors = {
-    info: "border-slate-700/80 bg-slate-900/95",
-    success: "border-emerald-500/40 bg-emerald-950/95",
-    error: "border-red-500/40 bg-red-950/95",
+    info: "border-slate-300 dark:border-slate-700/80 bg-white/95 dark:bg-slate-900/95 text-slate-800 dark:text-gray-100",
+    success: "border-emerald-500/40 bg-emerald-50 dark:bg-emerald-950/95 text-emerald-900 dark:text-emerald-100",
+    error: "border-red-500/40 bg-red-50 dark:bg-red-950/95 text-red-900 dark:text-red-100",
   };
   const dots = {
     info: "bg-cyan-400",

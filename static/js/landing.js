@@ -182,18 +182,18 @@
   /* ---------- recent grid ---------- */
 
   var STATUS_BADGE = {
-    ready: "bg-emerald-500/15 text-emerald-300 border-emerald-500/30",
-    processing: "bg-amber-500/15 text-amber-300 border-amber-500/30",
-    analyzing: "bg-amber-500/15 text-amber-300 border-amber-500/30",
-    queued: "bg-slate-500/15 text-slate-300 border-slate-500/30",
-    failed: "bg-red-500/15 text-red-300 border-red-500/30",
+    ready: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/30",
+    processing: "bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/30",
+    analyzing: "bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/30",
+    queued: "bg-slate-500/15 text-slate-600 dark:text-slate-300 border-slate-500/30",
+    failed: "bg-red-500/15 text-red-700 dark:text-red-300 border-red-500/30",
   };
 
   function skeletonHTML() {
     var out = "";
     for (var i = 0; i < 6; i++) {
       out +=
-        '<div class="rounded-2xl border border-slate-800 bg-slate-900/50 overflow-hidden">' +
+        '<div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 overflow-hidden shadow-sm">' +
         '<div class="skel skel-aspect-video"></div>' +
         '<div class="p-4 space-y-2"><div class="skel h-4"></div>' +
         '<div class="skel h-3 w-2/3"></div></div></div>';
@@ -207,7 +207,7 @@
       v.thumbnail ||
       (v.youtube_id ? "https://i.ytimg.com/vi/" + v.youtube_id + "/hqdefault.jpg" : "");
     return (
-      '<a href="/watch/' + esc(v.video_id) + '/" class="group rounded-2xl border border-slate-800 bg-slate-900/50 overflow-hidden hover:border-violet-500/50 transition">' +
+      '<a href="/watch/' + esc(v.video_id) + '/" class="group rounded-2xl border border-slate-200 dark:border-slate-800 bg-gradient-to-b from-white to-violet-50/60 dark:bg-slate-900/50 dark:bg-none overflow-hidden shadow-sm ring-1 ring-slate-900/5 dark:ring-0 hover:shadow-xl hover:-translate-y-1 hover:border-violet-400/60 dark:hover:border-violet-500/50 transition">' +
       '<div class="relative aspect-video bg-black">' +
       (thumb
         ? '<img src="' + esc(thumb) + '" alt="" loading="lazy" class="w-full h-full object-cover group-hover:opacity-90 transition" />'
@@ -215,7 +215,7 @@
       '<span class="absolute bottom-2 right-2 px-1.5 py-0.5 rounded-md bg-black/70 text-xs font-mono text-gray-200">' +
       esc(fmtDur(v.duration_sec)) +
       "</span></div>" +
-      '<div class="p-4"><p class="font-semibold line-clamp-2 group-hover:text-violet-300 transition">' +
+      '<div class="p-4"><p class="font-semibold text-slate-900 dark:text-gray-100 line-clamp-2 group-hover:text-violet-700 dark:group-hover:text-violet-300 transition">' +
       esc(v.title || "Untitled video") +
       "</p>" +
       '<div class="mt-2"><span class="inline-block px-2 py-0.5 rounded-full border text-xs ' + badge + '">' +

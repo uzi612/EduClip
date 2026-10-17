@@ -69,14 +69,14 @@
     overlay.className = "fixed inset-0 z-50 flex items-center justify-center p-4";
     overlay.innerHTML =
       '<div class="absolute inset-0 bg-black/70 backdrop-blur-sm" data-modal-close></div>' +
-      '<div role="alertdialog" aria-modal="true" aria-labelledby="modalTitle" aria-describedby="modalMsg" class="relative w-full max-w-md rounded-2xl border border-slate-800 bg-panel p-6 shadow-2xl">' +
-      '<h2 id="modalTitle" class="text-lg font-bold tracking-tight">' + esc(opts.title || "Something went wrong") + "</h2>" +
-      '<p id="modalMsg" class="mt-2 text-sm text-gray-400">' + esc(opts.message || "") + "</p>" +
+      '<div role="alertdialog" aria-modal="true" aria-labelledby="modalTitle" aria-describedby="modalMsg" class="relative w-full max-w-md rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-panel p-6 shadow-2xl">' +
+      '<h2 id="modalTitle" class="text-lg font-bold tracking-tight text-slate-900 dark:text-gray-100">' + esc(opts.title || "Something went wrong") + "</h2>" +
+      '<p id="modalMsg" class="mt-2 text-sm text-slate-500 dark:text-gray-400">' + esc(opts.message || "") + "</p>" +
       '<div class="mt-6 flex justify-end gap-2">' +
-      '<button type="button" data-modal-close class="px-4 py-2 rounded-xl text-sm border border-slate-800 bg-slate-900/70 text-gray-300 hover:text-gray-100 transition">' +
+      '<button type="button" data-modal-close class="px-4 py-2 rounded-xl text-sm border border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-900/70 text-slate-600 dark:text-gray-300 hover:text-slate-900 dark:hover:text-gray-100 transition">' +
       esc(opts.dismissLabel || "Dismiss") +
       "</button>" +
-      '<button type="button" data-modal-retry class="px-4 py-2 rounded-xl text-sm font-semibold bg-gradient-to-r from-violet-600 to-cyan-500 hover:opacity-90 transition">' +
+      '<button type="button" data-modal-retry class="px-4 py-2 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-violet-600 to-cyan-500 hover:opacity-90 transition">' +
       esc(opts.retryLabel || "Retry") +
       "</button></div></div>";
 

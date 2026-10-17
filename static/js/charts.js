@@ -97,9 +97,9 @@
 
   function pendingCopy() {
     return (
-      '<div class="rounded-2xl border border-dashed border-slate-800 p-10 text-center">' +
-      '<p class="font-semibold">Analytics pending…</p>' +
-      '<p class="mt-1 text-sm text-gray-400">Charts appear here once the video finishes processing.</p></div>'
+      '<div class="rounded-2xl border border-dashed border-slate-300 dark:border-slate-800 p-10 text-center">' +
+      '<p class="font-semibold text-slate-900 dark:text-gray-100">Analytics pending…</p>' +
+      '<p class="mt-1 text-sm text-slate-500 dark:text-gray-400">Charts appear here once the video finishes processing.</p></div>'
     );
   }
 
@@ -139,7 +139,7 @@
     var rows = rowArrays
       .map(function (cells) {
         return (
-          '<tr class="border-t border-slate-800">' +
+          '<tr class="border-t border-slate-200 dark:border-slate-800">' +
           cells
             .map(function (c, i) {
               return '<td class="' + (i === 0 ? "font-mono" : "text-right font-mono") + '">' + esc(c) + "</td>";
@@ -251,10 +251,10 @@
       .map(function (label, i) {
         return (
           '<button type="button" data-topic="' + i + '" aria-label="Seek to chapter ' + esc(label) + '" ' +
-          'class="flex items-center gap-2 px-2.5 py-1.5 rounded-full border border-slate-800 bg-slate-900/50 text-xs hover:border-violet-500/50 transition">' +
+          'class="flex items-center gap-2 px-2.5 py-1.5 rounded-full border border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-900/50 text-xs text-slate-700 dark:text-gray-300 hover:border-violet-500/50 transition">' +
           '<span class="w-2.5 h-2.5 rounded-full shrink-0" style="background:' + colors[i] + '" aria-hidden="true"></span>' +
           '<span class="font-medium truncate max-w-[10rem]">' + esc(label) + "</span>" +
-          '<span class="font-mono text-gray-400">' + pcts[i] + "%</span></button>"
+          '<span class="font-mono text-slate-500 dark:text-gray-400">' + pcts[i] + "%</span></button>"
         );
       })
       .join("");
@@ -418,9 +418,9 @@
     var avg = sum / values.length;
     function chip(k, v) {
       return (
-        '<span class="px-2.5 py-1 rounded-full border border-slate-800 bg-slate-900/50 text-xs">' +
+        '<span class="px-2.5 py-1 rounded-full border border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-900/50 text-xs">' +
         '<span class="text-gray-500">' + esc(k) + " </span>" +
-        '<span class="font-mono text-gray-200">' + esc(v) + "</span></span>"
+        '<span class="font-mono text-slate-800 dark:text-gray-200">' + esc(v) + "</span></span>"
       );
     }
     box.innerHTML =
