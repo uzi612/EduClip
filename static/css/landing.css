@@ -466,17 +466,42 @@ html.dark #features .feature-card:nth-child(4) {
   border-color: rgba(139, 92, 246, 0.45);
   box-shadow: var(--edu-shadow-lift);
 }
-/* How-it-works steps: one uniform, quiet-premium surface on all three —
-   a whisper of cool neutral that lets the bold cards above carry the color. */
+/* How-it-works steps: one uniform, soft airy violet surface on all three —
+   a top sheen over a gentle violet wash, drawn from the app's violet→cyan
+   identity. Same background on every card; light-theme text stays slate. */
 #how-it-works .feature-card {
-  background: linear-gradient(180deg, #efeafd 0%, #e2dbfa 100%);
-  border-color: #cfc5f3;
-  box-shadow: 0 1px 2px rgba(76, 29, 149, 0.12), 0 16px 38px -16px rgba(124, 58, 237, 0.45);
+  background:
+    radial-gradient(125% 95% at 50% 0%, #ffffff 0%, rgba(255, 255, 255, 0) 62%),
+    linear-gradient(180deg, #f4f0fe 0%, #e9e2fb 100%);
+  border-color: #d9cff7;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 1px 2px rgba(76, 29, 149, 0.1),
+    0 22px 46px -22px rgba(124, 58, 237, 0.4);
+}
+#how-it-works .feature-card:hover {
+  border-color: rgba(139, 92, 246, 0.55);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    0 2px 4px rgba(76, 29, 149, 0.12),
+    0 28px 58px -22px rgba(124, 58, 237, 0.55);
 }
 html.dark #how-it-works .feature-card {
-  background: linear-gradient(180deg, #221d45 0%, #171433 100%);
+  background:
+    radial-gradient(125% 95% at 50% 0%, rgba(167, 139, 250, 0.18) 0%, rgba(167, 139, 250, 0) 62%),
+    linear-gradient(180deg, #241f47 0%, #171433 100%);
   border-color: #3d3670;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 18px 42px -18px rgba(139, 92, 246, 0.5);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 1px 2px rgba(0, 0, 0, 0.4),
+    0 22px 48px -20px rgba(139, 92, 246, 0.5);
+}
+html.dark #how-it-works .feature-card:hover {
+  border-color: rgba(167, 139, 250, 0.6);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.09),
+    0 2px 4px rgba(0, 0, 0, 0.45),
+    0 30px 62px -20px rgba(139, 92, 246, 0.7);
 }
 html.dark .feature-card {
   border-color: #1e293b;
