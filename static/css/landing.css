@@ -466,14 +466,15 @@ html.dark #features .feature-card:nth-child(4) {
   border-color: rgba(139, 92, 246, 0.45);
   box-shadow: var(--edu-shadow-lift);
 }
-/* How-it-works steps: one uniform, soft airy violet surface on all three —
-   a top sheen over a gentle violet wash, drawn from the app's violet→cyan
-   identity. Same background on every card; light-theme text stays slate. */
+/* How-it-works steps: one uniform surface on all three — the app's identity
+   gradient (violet #7c3aed → blue #3b82f6 → cyan #06b6d4) at low alpha over
+   the card, so it reads as a soft airy wash. Same background on every card;
+   light-theme text stays slate. */
 #how-it-works .feature-card {
   background:
-    radial-gradient(125% 95% at 50% 0%, #ffffff 0%, rgba(255, 255, 255, 0) 62%),
-    linear-gradient(180deg, #f4f0fe 0%, #e9e2fb 100%);
-  border-color: #d9cff7;
+    linear-gradient(165deg, rgba(124, 58, 237, 0.15) 0%, rgba(59, 130, 246, 0.1) 50%, rgba(6, 182, 212, 0.15) 100%),
+    #ffffff;
+  border-color: #d6d2f2;
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.9),
     0 1px 2px rgba(76, 29, 149, 0.1),
@@ -488,9 +489,9 @@ html.dark #features .feature-card:nth-child(4) {
 }
 html.dark #how-it-works .feature-card {
   background:
-    radial-gradient(125% 95% at 50% 0%, rgba(167, 139, 250, 0.18) 0%, rgba(167, 139, 250, 0) 62%),
-    linear-gradient(180deg, #241f47 0%, #171433 100%);
-  border-color: #3d3670;
+    linear-gradient(165deg, rgba(124, 58, 237, 0.32) 0%, rgba(59, 130, 246, 0.26) 50%, rgba(6, 182, 212, 0.3) 100%),
+    #141230;
+  border-color: #3a3568;
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.06),
     0 1px 2px rgba(0, 0, 0, 0.4),
