@@ -55,3 +55,30 @@
     transition: none;
   }
 }
+
+/* Light theme: airy faces on the app identity gradient at low alpha, matching
+   the how-it-works cards. Every rule below is scoped to html:not(.dark), so
+   the dark theme keeps its original gradients untouched. */
+html:not(.dark) .flash-face {
+  border-color: rgba(139, 92, 246, 0.22);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 1px 2px rgba(15, 23, 42, 0.06),
+    0 20px 44px -20px rgba(124, 58, 237, 0.35);
+}
+html:not(.dark) .flash-front {
+  background:
+    radial-gradient(120% 90% at 50% 0%, #ffffff 0%, rgba(255, 255, 255, 0) 62%),
+    linear-gradient(165deg, rgba(124, 58, 237, 0.12) 0%, rgba(59, 130, 246, 0.08) 50%, rgba(6, 182, 212, 0.12) 100%),
+    #ffffff;
+}
+html:not(.dark) .flash-back {
+  background:
+    radial-gradient(120% 90% at 50% 0%, #ffffff 0%, rgba(255, 255, 255, 0) 62%),
+    linear-gradient(165deg, rgba(124, 58, 237, 0.15) 0%, rgba(59, 130, 246, 0.1) 50%, rgba(6, 182, 212, 0.15) 100%),
+    #ffffff;
+}
+/* Utility remaps so states stay readable on the light faces:
+   hover colors above would render near-white (cyan-200 / emerald-200). */
+html:not(.dark) .flash-scene .hover\:text-cyan-200:hover { color: #0e7490; }
+html:not(.dark) .flash-scene .hover\:text-emerald-200:hover { color: #047857; }
