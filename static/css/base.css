@@ -13,9 +13,15 @@
   --edu-shadow-card: 0 20px 40px -18px rgba(0, 0, 0, 0.55);
 }
 
-html.dark body {
-  background: var(--edu-void);
-  color: #f3f4f6;
+/* Explicit two-theme foundation.
+   Light is the authored default; dark lives only in `dark:` variants and
+   `html.dark` component rules. No utility remapping — what each theme gets
+   is always visible in the class list. */
+:root {
+  color-scheme: light;
+}
+html.dark {
+  color-scheme: dark;
 }
 
 /* Staggered entrance — applied via .animate-fade-up in templates */
@@ -28,19 +34,15 @@ html.dark body {
 }
 
 .edu-gradient-text {
-  background: linear-gradient(100deg, #a78bfa, #22d3ee);
+  background: linear-gradient(100deg, #6d28d9, #0e7490);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
 }
-
-.edu-card {
-  border-radius: var(--edu-radius);
-  border: 1px solid var(--edu-edge);
-  background: rgba(15, 23, 42, 0.7);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  box-shadow: var(--edu-shadow-card);
+html.dark .edu-gradient-text {
+  background: linear-gradient(100deg, #a78bfa, #22d3ee);
+  -webkit-background-clip: text;
+  background-clip: text;
 }
 
 /* Guard against horizontal scroll on 360px mobile (SETUP-02 acceptance) */
@@ -66,8 +68,11 @@ iframe {
   height: 8px;
 }
 *::-webkit-scrollbar-thumb {
-  background: #1e293b;
+  background: #cbd5e1;
   border-radius: 8px;
+}
+html.dark *::-webkit-scrollbar-thumb {
+  background: #1e293b;
 }
 *::-webkit-scrollbar-track {
   background: transparent;
@@ -89,68 +94,6 @@ iframe {
   }
 }
 
-/* Light theme (opt-in via #themeToggle; dark remains the default).
-   Overrides the dark-first surfaces used by the landing shell. */
-html:not(.dark) body {
-  background: #f8fafc;
-  color: #0f172a;
-}
-html:not(.dark) .bg-void {
-  background: #f8fafc;
-}
-html:not(.dark) header {
-  background: rgba(255, 255, 255, 0.8);
-}
-html:not(.dark) .bg-slate-900\/70 {
-  background: rgba(255, 255, 255, 0.7);
-}
-html:not(.dark) .bg-slate-900\/50 {
-  background: rgba(255, 255, 255, 0.6);
-}
-html:not(.dark) .bg-slate-800 {
-  background: #e2e8f0;
-}
-html:not(.dark) .border-slate-800 {
-  border-color: #e2e8f0;
-}
-html:not(.dark) .text-gray-100 {
-  color: #0f172a;
-}
-html:not(.dark) .text-gray-200 {
-  color: #1e293b;
-}
-html:not(.dark) .text-gray-300 {
-  color: #334155;
-}
-html:not(.dark) .text-violet-300 {
-  color: #6d28d9;
-}
-html:not(.dark) .text-cyan-300,
-html:not(.dark) .text-cyan-400 {
-  color: #0e7490;
-}
-html:not(.dark) .text-amber-300 {
-  color: #92400e;
-}
-html:not(.dark) .text-emerald-300 {
-  color: #047857;
-}
-html:not(.dark) .text-red-300 {
-  color: #b91c1c;
-}
-html:not(.dark) .text-gray-400 {
-  color: #64748b;
-}
-html:not(.dark) .text-gray-500 {
-  color: #64748b;
-}
-html:not(.dark) .placeholder\:text-gray-500::placeholder {
-  color: #94a3b8;
-}
-html:not(.dark) *::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-}
-
 /* Native <details> dropdown (Recent videos, Transcript): hide the default
    disclosure marker and rotate the chevron when open. No JS required, so it
    is immune to stale asset caches and keyboard-accessible for free. */
@@ -161,3 +104,4 @@ html:not(.dark) *::-webkit-scrollbar-thumb {
 @media (prefers-reduced-motion: reduce) {
   .dropdown-chev { transition: none; }
 }
+
