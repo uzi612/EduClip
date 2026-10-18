@@ -94,4 +94,14 @@ html.dark *::-webkit-scrollbar-thumb {
   }
 }
 
+/* Native <details> dropdown (Recent videos, Transcript): hide the default
+   disclosure marker and rotate the chevron when open. No JS required, so it
+   is immune to stale asset caches and keyboard-accessible for free. */
+.dropdown-details > summary { list-style: none; }
+.dropdown-details > summary::-webkit-details-marker { display: none; }
+.dropdown-details > summary::marker { content: ""; }
+.dropdown-details[open] .dropdown-chev { transform: rotate(90deg); }
+@media (prefers-reduced-motion: reduce) {
+  .dropdown-chev { transition: none; }
+}
 

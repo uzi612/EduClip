@@ -200,18 +200,28 @@
 
 <!-- ================= RECENT ================= -->
 <section class="mt-12" aria-label="Recent videos">
-  <div class="flex items-center justify-between">
-    <h2 class="font-display text-lg font-bold tracking-tight text-slate-900 dark:text-gray-100">Recent videos</h2>
-    <span id="recentCount" class="text-xs font-mono text-slate-500 dark:text-gray-500"></span>
-  </div>
-  <div id="recentGrid" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-4"></div>
-  <div id="recentEmpty" class="hidden mt-4 rounded-2xl border border-dashed border-slate-300 dark:border-slate-800 p-10 text-center">
-    <div class="empty-icon">
-      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="6" width="13" height="12" rx="2"/><path d="m22 8-6 4 6 4V8Z"/></svg>
+  <details class="dropdown-details group rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/50 overflow-hidden">
+    <summary class="flex items-center justify-between gap-3 px-4 py-4 sm:px-6 cursor-pointer select-none hover:bg-slate-50 dark:hover:bg-slate-800/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/60 transition">
+      <span class="flex items-center gap-3 min-w-0">
+        <svg aria-hidden="true" viewBox="0 0 24 24"
+          class="dropdown-chev w-4 h-4 shrink-0 text-gray-400 group-hover:text-violet-500 transition-transform duration-200 motion-reduce:transition-none">
+          <path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+        <h2 class="font-display text-lg font-bold tracking-tight text-slate-900 dark:text-gray-100">Recent videos</h2>
+      </span>
+      <span id="recentCount" class="text-xs font-mono text-slate-500 dark:text-gray-500"></span>
+    </summary>
+    <div class="px-4 pb-4 sm:px-6 sm:pb-6">
+      <div id="recentGrid" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-2"></div>
+      <div id="recentEmpty" class="hidden mt-2 rounded-2xl border border-dashed border-slate-300 dark:border-slate-800 p-10 text-center">
+        <div class="empty-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="6" width="13" height="12" rx="2"/><path d="m22 8-6 4 6 4V8Z"/></svg>
+        </div>
+        <p class="mt-3 font-semibold text-slate-900 dark:text-gray-100">No videos yet</p>
+        <p class="mt-1 text-sm text-slate-600 dark:text-gray-400">Paste a YouTube URL above — it will show up here once processed.</p>
+      </div>
     </div>
-    <p class="mt-3 font-semibold text-slate-900 dark:text-gray-100">No videos yet</p>
-    <p class="mt-1 text-sm text-slate-600 dark:text-gray-400">Paste a YouTube URL above — it will show up here once processed.</p>
-  </div>
+  </details>
 </section>
 {% endblock %}
 

@@ -507,20 +507,6 @@
     });
   }
 
-  if (typeof document !== "undefined" && document.addEventListener && !window.__transcriptToggleBound) {
-    window.__transcriptToggleBound = true;
-    document.addEventListener("click", function (e) {
-      var btn = e.target && e.target.closest ? e.target.closest("#transcriptToggle") : null;
-      if (!btn) return;
-      var body = $("transcriptBody");
-      if (!body) return;
-      var open = body.classList.toggle("hidden") === false;
-      btn.setAttribute("aria-expanded", open ? "true" : "false");
-      var chev = $("transcriptChevron");
-      if (chev) chev.classList.toggle("rotate-90", open);
-    });
-  }
-
   function renderHeader(v) {
     var title = $("videoTitle");
     var meta = $("videoMeta");
