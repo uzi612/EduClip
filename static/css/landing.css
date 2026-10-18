@@ -526,13 +526,3 @@ html.dark .laptop-base {
   .mock-card { animation: none; }
   .feature-card:hover, .demo-chip:hover { transform: none; }
 }
-
-/* Recent videos: native <details> dropdown — expands without any JS, so it is
-   immune to stale asset caches and keyboard-accessible for free. */
-.recent-drop > .recent-summary { list-style: none; }
-.recent-drop > .recent-summary::-webkit-details-marker { display: none; }
-.recent-drop > .recent-summary::marker { content: ""; }
-.recent-drop[open] .recent-chev { transform: rotate(90deg); }
-@media (prefers-reduced-motion: reduce) {
-  .recent-chev { transition: none; }
-}
