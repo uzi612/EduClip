@@ -124,7 +124,9 @@
   }
 
   // Generic a11y data table: headLabels + rows of cell strings.
-  function renderTableInto(tableId, detailsId, headLabels, rowArrays) {
+  // Optional seekFor(i) -> seconds renders the first cell as a seek button so
+  // every table row can jump to its moment (keyboard-friendly by default).
+  function renderTableInto(tableId, detailsId, headLabels, rowArrays, seekFor) {
     var table = $(tableId);
     var details = $(detailsId);
     if (!table) return;
@@ -137,12 +139,25 @@
         .join("") +
       "</tr></thead>";
     var rows = rowArrays
-      .map(function (cells) {
+      .map(function (cells, i) {
+        var first =
+          '<td class="' + (i === 0 ? "text-left" : "text-right") + ' font-mono">' + esc(cells[0]) + "</td>";
+        if (typeof seekFor === "function") {
+          var sec = seekFor(i);
+          if (sec !== null && sec !== undefined && typeof window.seekToTimestamp === "function") {
+            first =
+              '<td class="' + (i === 0 ? "text-left" : "text-right") + ' font-mono">' +
+              '<button type="button" data-seek="' + Number(sec) + '" aria-label="Seek video to ' + esc(cells[0]) + '"' +
+              ' class="underline-offset-2 hover:underline text-cyan-600 dark:text-cyan-400">' + esc(cells[0]) + "</button></td>";
+          }
+        }
         return (
           '<tr class="border-t border-slate-200 dark:border-slate-800">' +
+          first +
           cells
-            .map(function (c, i) {
-              return '<td class="' + (i === 0 ? "font-mono" : "text-right font-mono") + '">' + esc(c) + "</td>";
+            .slice(1)
+            .map(function (c) {
+              return '<td class="text-right font-mono">' + esc(c) + "</td>";
             })
             .join("") +
           "</tr>"
@@ -169,7 +184,11 @@
             return (d.data || [])[i] !== undefined ? String(d.data[i]) : "–";
           })
         );
-      })
+      }),
+      function (i) {
+        var sec = labelToSec((data.labels || [])[i]);
+        return sec !== null ? sec : i * 60;
+      }
     );
   }
 
@@ -224,7 +243,8 @@
     canvas.setAttribute(
       "aria-label",
       "Bar chart of keyword mentions per minute: " +
-        (data.datasets || []).map(function (d) { return d.label; }).join(", ")
+        (data.datasets || []).map(function (d) { return d.label; }).join(", ") +
+        ". Click a bar to seek the video to that minute."
     );
     renderTable(data);
     showState("ready");
@@ -381,7 +401,7 @@
     });
     canvas.setAttribute(
       "aria-label",
-      "Doughnut chart of time per chapter. Largest: " + labels[top] + " at " + pcts[top] + " percent."
+      "Doughnut chart of time per chapter. Largest: " + labels[top] + " at " + pcts[top] + " percent. Click a segment to seek that chapter."
     );
     renderLegend(labels, pcts, colors);
     renderTableInto(
@@ -390,7 +410,10 @@
       ["Chapter", "Share", "Time"],
       labels.map(function (label, i) {
         return [label, pcts[i] + "%", fmtDur(values[i])];
-      })
+      }),
+      function (i) {
+        return segmentStart(values, i);
+      }
     );
     showCardState("topic", "ready");
     bindExport();
@@ -549,7 +572,7 @@
     });
     canvas.setAttribute(
       "aria-label",
-      "Line chart of attention over time. Peak " + pctStr(values[peak]) + " at " + labels[peak] + "."
+      "Line chart of attention over time. Peak " + pctStr(values[peak]) + " at " + labels[peak] + ". Click a point to seek that moment."
     );
     renderPacingStats(values, labels, starts.length);
     renderTableInto(
@@ -558,7 +581,11 @@
       ["Time", "Attention"],
       labels.map(function (label, i) {
         return [label, pctStr(values[i] !== undefined ? values[i] : 0)];
-      })
+      }),
+      function (i) {
+        var sec = labelToSec(labels[i]);
+        return sec !== null ? sec : i * 60;
+      }
     );
     showCardState("pacing", "ready");
     return true;
