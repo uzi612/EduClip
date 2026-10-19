@@ -115,6 +115,48 @@ def test_invalid_url_returns_400():
     assert r.status_code == 400 and r.json()["error"]["code"] == "INVALID_URL"
 
 
+def test_language_option_persists_and_shapes_transcription():
+    _clean()
+    with patch("services.youtube.get_video_metadata", return_value=dict(META)), patch(
+        "apps.videos.tasks.process_video_task") as task:
+        task.delay.return_value = MagicMock(id="task-1")
+        r = _client().post(
+            API, {"youtube_url": URL, "options": {"language": "es"}},
+            format="json")
+    assert r.status_code == 202, r.content
+    video = Video.objects(youtube_id=VID).first()
+    assert video.language == "es"
+    task.delay.assert_called_once()
+
+
+def test_task_prefers_chosen_language_when_non_english():
+    _clean()
+    from apps.videos.video_service import get_or_create_video
+
+    video, _ = get_or_create_video(VID, META, language="es")
+    segs = [{"start": 0.0, "duration": 5.0, "text": "hola"}]
+    with patch("apps.videos.transcribe.transcribe_video",
+               return_value=(segs, "hola", "youtube_captions")) as tt, patch(
+        "apps.analytics.pipeline.run_analysis", return_value=dict(ANALYSIS)):
+        process_video_task.run(str(video.id))
+    assert tt.call_args.kwargs["languages"] == ("es", "en", "en-US", "en-GB")
+    assert tt.call_args.kwargs["whisper_language"] == "es"
+
+
+def test_task_defaults_to_english_languages():
+    _clean()
+    from apps.videos.video_service import get_or_create_video
+
+    video, _ = get_or_create_video(VID, META, language="en")
+    segs = [{"start": 0.0, "duration": 5.0, "text": "atp"}]
+    with patch("apps.videos.transcribe.transcribe_video",
+               return_value=(segs, "atp", "youtube_captions")) as tt, patch(
+        "apps.analytics.pipeline.run_analysis", return_value=dict(ANALYSIS)):
+        process_video_task.run(str(video.id))
+    assert tt.call_args.kwargs["languages"] == ("en", "en-US", "en-GB")
+    assert tt.call_args.kwargs["whisper_language"] == "en"
+
+
 def test_unavailable_video_returns_422():
     _clean()
     with patch("services.youtube.get_video_metadata",

@@ -135,8 +135,13 @@
     var lastTick = "";
     var stuckTicks = 0;
     var stuckNoted = false;
+    var langSelect = $("langSelect");
+    var language = langSelect ? langSelect.value : "en";
     api
-      .post("/process-video", { youtube_url: url })
+      .post("/process-video", {
+        youtube_url: url,
+        options: { language: language },
+      })
       .then(function (data) {
         if (data.status === "ready") return data;
         return api.pollVideo(data.video_id, {

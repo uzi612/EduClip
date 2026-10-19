@@ -10,7 +10,7 @@ from datetime import datetime
 ACTIVE_STATUSES = ("queued", "processing", "analyzing", "ready")
 
 
-def get_or_create_video(youtube_id, metadata, idempotency_key=""):
+def get_or_create_video(youtube_id, metadata, idempotency_key="", language="en"):
     """Return (video, created). Raises mongoengine ValidationError on bad data."""
     from apps.videos.models import Video
 
@@ -25,6 +25,7 @@ def get_or_create_video(youtube_id, metadata, idempotency_key=""):
             set__title=metadata.get("title", existing.title),
             set__channel=metadata.get("channel", existing.channel),
             set__thumbnail=metadata.get("thumbnail", existing.thumbnail),
+            set__language=language,
             set__idempotency_key=idempotency_key, set__updated_at=now,
         )
         existing.reload()
@@ -35,6 +36,7 @@ def get_or_create_video(youtube_id, metadata, idempotency_key=""):
         channel=metadata.get("channel", ""),
         thumbnail=metadata.get("thumbnail", ""),
         duration_sec=int(metadata.get("duration_sec", 0) or 0),
+        language=language,
         status="queued",
         progress=0.05,
         idempotency_key=idempotency_key,
