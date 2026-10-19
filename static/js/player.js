@@ -264,7 +264,7 @@
         var du = Number(transcript[k].duration) || 0;
         if (t >= Math.floor(st) && t < Math.floor(st) + Math.max(1, Math.ceil(du))) { line = k; break; }
       }
-      if (line !== currentLine) { currentLine = line; paintTranscriptActive(); }
+      if (line !== currentLine) { currentLine = line; paintTranscriptActive(); tsScrollFollow(); }
     }
   }
 
@@ -509,9 +509,77 @@
     });
   }
 
+  /* ---------- transcript reader controls: text size + follow-along ---------- */
+
+  var TS_SIZES = ["sm", "base", "lg", "xl"];
+  var tsFollow = true;
+  var tsManualUntil = 0;   // transient pause after the user scrolls the list
+  var tsSuppressUntil = 0; // ignore our own programmatic-scroll events
+
+  function tsSizeIdx() {
+    try {
+      var i = TS_SIZES.indexOf(localStorage.getItem("educlip-ts-size"));
+      return i >= 0 ? i : 0;
+    } catch (err) { return 0; }
+  }
+
+  function applyTranscriptSize(idx, save) {
+    idx = Math.max(0, Math.min(TS_SIZES.length - 1, idx));
+    var list = $("transcriptList");
+    if (list) list.setAttribute("data-size", TS_SIZES[idx]);
+    if (save) {
+      try { localStorage.setItem("educlip-ts-size", TS_SIZES[idx]); } catch (err) { /* private mode */ }
+    }
+    return idx;
+  }
+  applyTranscriptSize(tsSizeIdx(), false);
+
+  function reducedMotion() {
+    return typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
+  }
+
+  function tsScrollFollow() {
+    if (!tsFollow || typeof document === "undefined" || !document.querySelectorAll) return;
+    if (Date.now() < tsManualUntil) return; // user scrolled recently — hold still
+    var rows = document.querySelectorAll(".transcript-row");
+    for (var k = 0; k < rows.length; k++) {
+      if (Number(rows[k].getAttribute("data-tline")) === currentLine) {
+        tsSuppressUntil = Date.now() + 999;
+        rows[k].scrollIntoView({ block: "center", behavior: reducedMotion() ? "auto" : "smooth" });
+        return;
+      }
+    }
+  }
+
+  if (typeof document !== "undefined" && document.addEventListener && !window.__tsControlsBound) {
+    window.__tsControlsBound = true;
+    var followBtn = document.getElementById("transcriptFollow");
+    if (followBtn) followBtn.classList.add("ts-on"); // default: follow ON
+    document.addEventListener("click", function (e) {
+      var hit = e.target && e.target.closest ? e.target.closest : null;
+      if (!hit) return;
+      var minus = e.target.closest("#transcriptFontMinus");
+      var plus = e.target.closest("#transcriptFontPlus");
+      var follow = e.target.closest("#transcriptFollow");
+      if (minus) applyTranscriptSize(tsSizeIdx() - 1, true);
+      if (plus) applyTranscriptSize(tsSizeIdx() + 1, true);
+      if (follow) {
+        tsFollow = !tsFollow;
+        follow.setAttribute("aria-pressed", tsFollow ? "true" : "false");
+        follow.classList.toggle("ts-on", tsFollow);
+      }
+    });
+    var list = document.getElementById ? document.getElementById("transcriptList") : null;
+    if (list) {
+      list.addEventListener("scroll", function () {
+        if (Date.now() < tsSuppressUntil) return; // our own auto-scroll
+        tsManualUntil = Date.now() + 4000; // user scrolled — pause follow briefly
+      });
+    }
+  }
+
   /* copy the 60-second brief as markdown (feature: quick share/paste) */
-  if (typeof document !== "undefined" && document.addEventListener && !window.__briefCopyBound) {
-    window.__briefCopyBound = true;
+  if (typeof document !== "undefined" && document.addEventListener && !window.__briefCopyBound) {    window.__briefCopyBound = true;
     document.addEventListener("click", function (e) {
       var btn = e.target && e.target.closest ? e.target.closest("#briefCopy") : null;
       if (!btn) return;

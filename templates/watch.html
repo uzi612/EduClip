@@ -79,9 +79,17 @@
         <span id="transcriptCount" class="text-xs font-mono text-gray-500"></span>
       </summary>
       <div class="px-4 pb-4 sm:px-6 sm:pb-6">
-        <div>
+        <div class="flex items-center gap-2">
           <input id="transcriptSearch" type="search" placeholder="Search transcript…" autocomplete="off"
             class="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-transparent px-4 py-2.5 text-sm outline-none focus:border-violet-500/60 transition" />
+          <div class="flex items-center gap-1 shrink-0" role="group" aria-label="Transcript text size">
+            <button id="transcriptFontMinus" type="button" aria-label="Smaller transcript text"
+              class="px-2 py-2.5 rounded-xl text-xs font-mono border border-slate-300 dark:border-slate-700 text-slate-600 dark:text-gray-400 hover:text-violet-600 dark:hover:text-violet-300 hover:border-violet-500/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/60 transition">A-</button>
+            <button id="transcriptFontPlus" type="button" aria-label="Larger transcript text"
+              class="px-2 py-2.5 rounded-xl text-xs font-mono border border-slate-300 dark:border-slate-700 text-slate-600 dark:text-gray-400 hover:text-violet-600 dark:text-violet-300 hover:border-violet-500/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/60 transition">A+</button>
+            <button id="transcriptFollow" type="button" aria-pressed="true" aria-label="Auto-scroll transcript with playback"
+              class="px-2 py-2.5 rounded-xl text-xs font-semibold border border-slate-300 dark:border-slate-700 text-slate-600 dark:text-gray-400 hover:text-violet-600 dark:hover:text-violet-300 hover:border-violet-500/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/60 transition">Follow</button>
+          </div>
         </div>
         <div id="transcriptList" class="mt-3 space-y-1 max-h-[420px] overflow-y-auto pr-1"></div>
         <div id="transcriptPending" class="mt-3 rounded-2xl border border-dashed border-slate-300 dark:border-slate-800 p-10 text-center">
@@ -90,7 +98,6 @@
         </div>
       </div>
     </details>
-  </section>
   </section>
 
   <section class="mt-8" aria-label="Analytics">
