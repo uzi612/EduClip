@@ -135,8 +135,13 @@
     var lastTick = "";
     var stuckTicks = 0;
     var stuckNoted = false;
+    var langSelect = $("langSelect");
+    var language = langSelect ? langSelect.value : "en";
     api
-      .post("/process-video", { youtube_url: url })
+      .post("/process-video", {
+        youtube_url: url,
+        options: { language: language },
+      })
       .then(function (data) {
         if (data.status === "ready") return data;
         return api.pollVideo(data.video_id, {
@@ -206,8 +211,14 @@
     var thumb =
       v.thumbnail ||
       (v.youtube_id ? "https://i.ytimg.com/vi/" + v.youtube_id + "/hqdefault.jpg" : "");
+    var id = esc(v.video_id);
     return (
-      '<a href="/watch/' + esc(v.video_id) + '/" class="group rounded-2xl border border-slate-200 dark:border-slate-800 bg-gradient-to-b from-white to-violet-50/60 dark:bg-slate-900/50 dark:bg-none overflow-hidden shadow-sm ring-1 ring-slate-900/5 dark:ring-0 hover:shadow-xl hover:-translate-y-1 hover:border-violet-400/60 dark:hover:border-violet-500/50 transition">' +
+      '<div class="group relative rounded-2xl">' +
+      '<button type="button" data-delete-video="' + id + '" aria-label="Delete this video"'
+      + ' class="absolute top-2 right-2 z-10 p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white/90 dark:bg-slate-900/90 text-slate-500 dark:text-gray-400 opacity-0 focus:opacity-100 group-hover:opacity-100 hover:text-red-600 dark:hover:text-red-300 hover:border-red-400/60 transition" tabindex="0">'
+      + '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>'
+      + '<span class="sr-only">Delete</span></button>'
+      + '<a href="/watch/' + id + '/" class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-gradient-to-b from-white to-violet-50/60 dark:bg-slate-900/50 dark:bg-none overflow-hidden shadow-sm ring-1 ring-slate-900/5 dark:ring-0 hover:shadow-xl hover:-translate-y-1 hover:border-violet-400/60 dark:hover:border-violet-500/50 transition block">' +
       '<div class="relative aspect-video bg-black">' +
       (thumb
         ? '<img src="' + esc(thumb) + '" alt="" loading="lazy" class="w-full h-full object-cover group-hover:opacity-90 transition" />'
@@ -220,7 +231,7 @@
       "</p>" +
       '<div class="mt-2"><span class="inline-block px-2 py-0.5 rounded-full border text-xs ' + badge + '">' +
       esc(v.status || "queued") +
-      "</span></div></div></a>"
+      "</span></div></div></a></div>"
     );
   }
 
@@ -249,6 +260,56 @@
         grid.innerHTML = "";
         if (empty) empty.classList.remove("hidden");
         if (count) count.textContent = "";
+      });
+  }
+
+  /* delete a video from the recent grid (confirm modal → DELETE → remove card) */
+  if (typeof document !== "undefined" && document.addEventListener && !window.__recentDeleteBound) {
+    window.__recentDeleteBound = true;
+    document.addEventListener("click", function (e) {
+      var del = e.target && e.target.closest ? e.target.closest("[data-delete-video]") : null;
+      if (!del) return;
+      e.preventDefault();
+      e.stopPropagation();
+      var id = del.getAttribute("data-delete-video");
+      if (!id) return;
+      if (typeof window.showModal === "function") {
+        window.showModal({
+          title: "Delete this video?",
+          message: "Removes the video, transcript, flashcards and analytics permanently.",
+          retryLabel: "Delete",
+          onRetry: function () { deleteRecent(id); },
+        });
+      } else {
+        deleteRecent(id);
+      }
+    });
+  }
+
+  function deleteRecent(videoId) {
+    api
+      .del("/video/" + encodeURIComponent(videoId) + "/")
+      .then(function () {
+        var card = document.querySelector('[data-delete-video="' + videoId + '"]');
+        if (card && card.closest) {
+          var wrap = card.closest(".group");
+          if (wrap && wrap.parentNode) wrap.parentNode.removeChild(wrap);
+        }
+        var grid = $("recentGrid");
+        var empty = $("recentEmpty");
+        var count = $("recentCount");
+        var remaining = grid ? grid.querySelectorAll("a[href]").length : 0;
+        if (count) count.textContent = remaining ? remaining + " shown" : "";
+        if (empty && !remaining && grid) {
+          grid.innerHTML = "";
+          empty.classList.remove("hidden");
+        }
+        if (typeof showToast === "function") showToast("Video deleted.", "success");
+      })
+      .catch(function (err) {
+        if (typeof showToast === "function") {
+          showToast((err && err.message) || "Could not delete the video.", "error");
+        }
       });
   }
 

@@ -33,7 +33,13 @@ def process_video_task(self, video_id):
     try:
         video.update(set__status="processing", set__progress=0.2)
         video.reload()
-        segments, full_text, source = transcribe_mod.transcribe_video(video.youtube_id)
+        lang = (video.language or "en").strip()[:10]
+        if lang and lang != "en":
+            languages = (lang, "en", "en-US", "en-GB")
+        else:
+            languages = ("en", "en-US", "en-GB")
+        segments, full_text, source = transcribe_mod.transcribe_video(
+            video.youtube_id, languages=languages, whisper_language=lang)
         logger.info("task transcribed: task_id=%s video_id=%s source=%s segments=%d",
                     task_id, video_id, source, len(segments))
         video.update(

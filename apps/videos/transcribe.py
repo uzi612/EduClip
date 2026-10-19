@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 
 def transcribe_video(youtube_id, languages=("en", "en-US", "en-GB"), credentials=None,
-                     transcript_timeout_sec=None):
+                     transcript_timeout_sec=None, whisper_language="en"):
     """Run the fallback chain and return normalized (segments, full_text, source)."""
     timeout_kw = {} if transcript_timeout_sec is None else {
         "timeout_sec": transcript_timeout_sec}
@@ -55,7 +55,8 @@ def transcribe_video(youtube_id, languages=("en", "en-US", "en-GB"), credentials
             last_error = exc
 
     logger.info("transcribe tier start: video=%s tier=whisper_fallback", youtube_id)
-    segments, source = fallback_transcribe.whisper_transcribe(youtube_id)
+    segments, source = fallback_transcribe.whisper_transcribe(
+        youtube_id, language=whisper_language)
     cleaned, full_text = normalize_segments(segments)
     if not cleaned:
         raise TranscriptUnavailableError(

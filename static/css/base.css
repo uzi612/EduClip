@@ -105,3 +105,17 @@ html.dark *::-webkit-scrollbar-thumb {
   .dropdown-chev { transition: none; }
 }
 
+/* Transcript reader controls: font-size steps (A-/A+) and follow state.
+   Rows ship with Tailwind's text-sm; the id wins the specificity contest
+   so the stepped sizes apply without touching the JS markup. */
+#transcriptList .transcript-row { font-size: 0.875rem; line-height: 1.375rem; }
+#transcriptList[data-size="base"] .transcript-row { font-size: 1rem; line-height: 1.625rem; }
+#transcriptList[data-size="lg"] .transcript-row { font-size: 1.125rem; line-height: 1.75rem; }
+#transcriptList[data-size="xl"] .transcript-row { font-size: 1.25rem; line-height: 2rem; }
+#transcriptFollow.ts-on {
+  background: rgba(139, 92, 246, 0.12);
+  border-color: rgba(139, 92, 246, 0.5);
+  color: #6d28d9;
+}
+html.dark #transcriptFollow.ts-on { color: #a78bfa; }
+

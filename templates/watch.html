@@ -24,7 +24,10 @@
   <section id="briefBar" class="hidden mt-6 rounded-2xl border border-violet-500/30 bg-violet-500/5 dark:bg-violet-500/10 p-4 sm:p-5" aria-label="60-second brief">
     <div class="flex flex-wrap items-center justify-between gap-2">
       <h2 class="text-xs font-bold tracking-widest text-violet-600 dark:text-violet-300">60-SECOND BRIEF</h2>
-      <button id="briefStart" type="button" class="hidden px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-gradient-to-r from-violet-600 to-cyan-500 hover:opacity-90 transition">Start here →</button>
+      <span class="flex items-center gap-2">
+        <button id="briefCopy" type="button" class="hidden px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 dark:text-gray-300 border border-slate-300 dark:border-slate-700 bg-white/70 dark:bg-slate-900/60 hover:text-slate-900 dark:hover:text-white hover:border-violet-500/50 transition">Copy markdown</button>
+        <button id="briefStart" type="button" class="hidden px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-gradient-to-r from-violet-600 to-cyan-500 hover:opacity-90 transition">Start here →</button>
+      </span>
     </div>
     <ul id="briefTakeaways" class="mt-2 space-y-1.5 text-sm text-slate-700 dark:text-gray-300 leading-relaxed"></ul>
     <div id="keywordChips" class="mt-3 flex flex-wrap gap-1.5" aria-label="Key terms — select to jump"></div>
@@ -76,9 +79,17 @@
         <span id="transcriptCount" class="text-xs font-mono text-gray-500"></span>
       </summary>
       <div class="px-4 pb-4 sm:px-6 sm:pb-6">
-        <div>
+        <div class="flex items-center gap-2">
           <input id="transcriptSearch" type="search" placeholder="Search transcript…" autocomplete="off"
             class="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-transparent px-4 py-2.5 text-sm outline-none focus:border-violet-500/60 transition" />
+          <div class="flex items-center gap-1 shrink-0" role="group" aria-label="Transcript text size">
+            <button id="transcriptFontMinus" type="button" aria-label="Smaller transcript text"
+              class="px-2 py-2.5 rounded-xl text-xs font-mono border border-slate-300 dark:border-slate-700 text-slate-600 dark:text-gray-400 hover:text-violet-600 dark:hover:text-violet-300 hover:border-violet-500/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/60 transition">A-</button>
+            <button id="transcriptFontPlus" type="button" aria-label="Larger transcript text"
+              class="px-2 py-2.5 rounded-xl text-xs font-mono border border-slate-300 dark:border-slate-700 text-slate-600 dark:text-gray-400 hover:text-violet-600 dark:text-violet-300 hover:border-violet-500/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/60 transition">A+</button>
+            <button id="transcriptFollow" type="button" aria-pressed="true" aria-label="Auto-scroll transcript with playback"
+              class="px-2 py-2.5 rounded-xl text-xs font-semibold border border-slate-300 dark:border-slate-700 text-slate-600 dark:text-gray-400 hover:text-violet-600 dark:hover:text-violet-300 hover:border-violet-500/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/60 transition">Follow</button>
+          </div>
         </div>
         <div id="transcriptList" class="mt-3 space-y-1 max-h-[420px] overflow-y-auto pr-1"></div>
         <div id="transcriptPending" class="mt-3 rounded-2xl border border-dashed border-slate-300 dark:border-slate-800 p-10 text-center">
@@ -87,7 +98,6 @@
         </div>
       </div>
     </details>
-  </section>
   </section>
 
   <section class="mt-8" aria-label="Analytics">

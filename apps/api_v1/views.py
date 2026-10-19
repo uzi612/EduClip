@@ -80,6 +80,7 @@ def process_video(request):
                 "details": {}, "request_id": rid, "retryable": True}}, status=503)
 
     youtube_id = serializer.youtube_id
+    options = serializer.validated_options()
     idempotency_key = request.headers.get("Idempotency-Key", "")
     try:
         metadata = get_video_metadata(youtube_id)
@@ -90,7 +91,8 @@ def process_video(request):
                                     "retryable": exc.retryable}}, status=422)
     try:
         video, created = get_or_create_video(
-            youtube_id, metadata, idempotency_key=idempotency_key)
+            youtube_id, metadata, idempotency_key=idempotency_key,
+            language=options["language"])
     except MongoValidationError as exc:
         rid = request_id_of(request)
         return Response({"error": {"code": "VIDEO_UNAVAILABLE",

@@ -147,6 +147,11 @@ const api = {
     return this.request(path, Object.assign({}, opts, { method: "POST", body: body, idempotent: true }));
   },
 
+  del(path, opts) {
+    // DELETE returns 204 No Content on success (mapped to null by _fetchOnce).
+    return this.request(path, Object.assign({}, opts, { method: "DELETE", retries: 0 }));
+  },
+
   // Poll GET /video/<id>/ until ready/failed/timeout. onTick(status, progress) each tick.
   async pollVideo(videoId, opts) {
     opts = opts || {};

@@ -134,11 +134,15 @@ def test_request_logging_emits_line():
 
 
 def test_llm_backoff_is_exponential_with_jitter():
+    # Force the mocked provider: when LLM_PROVIDER=gemini (e.g. local .env)
+    # analyze_video would otherwise make UNMOCKED network calls to Gemini and
+    # its internal retries pollute the recorded sleeps (and break offline rule).
     llm_client.clear_cache()
     segs = [{"start": 0.0, "duration": 5.0, "text": "atp"}]
     sleeps = []
     with patch.object(llm_client, "_call_openai",
                       side_effect=LLMError("timeout", retryable=True)), patch(
+        "services.llm_client._provider_name", return_value="openai"), patch(
         "random.uniform", return_value=0.0), patch(
         "services.llm_client.time.sleep", side_effect=lambda s: sleeps.append(s)):
         try:
