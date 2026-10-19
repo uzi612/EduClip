@@ -24,7 +24,10 @@
   <section id="briefBar" class="hidden mt-6 rounded-2xl border border-violet-500/30 bg-violet-500/5 dark:bg-violet-500/10 p-4 sm:p-5" aria-label="60-second brief">
     <div class="flex flex-wrap items-center justify-between gap-2">
       <h2 class="text-xs font-bold tracking-widest text-violet-600 dark:text-violet-300">60-SECOND BRIEF</h2>
-      <button id="briefStart" type="button" class="hidden px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-gradient-to-r from-violet-600 to-cyan-500 hover:opacity-90 transition">Start here →</button>
+      <span class="flex items-center gap-2">
+        <button id="briefCopy" type="button" class="hidden px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 dark:text-gray-300 border border-slate-300 dark:border-slate-700 bg-white/70 dark:bg-slate-900/60 hover:text-slate-900 dark:hover:text-white hover:border-violet-500/50 transition">Copy markdown</button>
+        <button id="briefStart" type="button" class="hidden px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-gradient-to-r from-violet-600 to-cyan-500 hover:opacity-90 transition">Start here →</button>
+      </span>
     </div>
     <ul id="briefTakeaways" class="mt-2 space-y-1.5 text-sm text-slate-700 dark:text-gray-300 leading-relaxed"></ul>
     <div id="keywordChips" class="mt-3 flex flex-wrap gap-1.5" aria-label="Key terms — select to jump"></div>

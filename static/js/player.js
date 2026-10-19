@@ -216,6 +216,8 @@
         };
       } else start.classList.add("hidden");
     }
+    var copyBtn = $("briefCopy");
+    if (copyBtn) copyBtn.classList.toggle("hidden", !hasSummary);
   }
 
   function syncChapter() {
@@ -505,6 +507,44 @@
     document.addEventListener("input", function (e) {
       if (e.target && e.target.id === "transcriptSearch") paintTranscript(e.target.value);
     });
+  }
+
+  /* copy the 60-second brief as markdown (feature: quick share/paste) */
+  if (typeof document !== "undefined" && document.addEventListener && !window.__briefCopyBound) {
+    window.__briefCopyBound = true;
+    document.addEventListener("click", function (e) {
+      var btn = e.target && e.target.closest ? e.target.closest("#briefCopy") : null;
+      if (!btn) return;
+      var v = (window.EDUCLIP && window.EDUCLIP.video) || {};
+      var lines = [];
+      if (v.title) lines.push("## " + v.title, "");
+      (takeaways(v.summary) || []).forEach(function (s) { lines.push("- " + s); });
+      var keys = ((v.keywords || []).map(function (k) { return k.term; }) || []).slice(0, 8);
+      if (keys.length) {
+        lines.push("", "**Key terms:** " + keys.join(", "), "");
+      }
+      var text = lines.join("\n");
+      var done = function () {
+        if (typeof showToast === "function") showToast("Brief copied as markdown.", "success");
+        else btn.textContent = "Copied!";
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done, function () { fallbackCopy(text, done); });
+      } else {
+        fallbackCopy(text, done);
+      }
+    });
+  }
+
+  function fallbackCopy(text, done) {
+    var ta = document.createElement("textarea");
+    ta.value = text;
+    ta.style.position = "fixed";
+    ta.style.opacity = "0";
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand("copy"); done(); } catch (err) { /* unsupported */ }
+    document.body.removeChild(ta);
   }
 
   function renderHeader(v) {
