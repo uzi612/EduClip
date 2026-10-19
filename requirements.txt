@@ -9,7 +9,8 @@ youtube-transcript-api>=1.0
 openai>=1.0
 # Optional: google-generativeai (Gemini adapter via LLM_PROVIDER=gemini)
 # Keyless metadata fallback + local review (no YOUTUBE_API_KEY needed):
-yt-dlp
+# Floor version: player_client fallback lists need yt-dlp>=2025.1.
+yt-dlp>=2025.1
 # In-memory Mongo for tests and config/settings/dev.py local review:
 mongomock
 # Optional audio fallback tier (BACKEND-01 T3):
