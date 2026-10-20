@@ -215,8 +215,11 @@
     return (
       '<div class="group relative rounded-2xl">' +
       '<button type="button" data-delete-video="' + id + '" aria-label="Delete this video"'
-      + ' class="absolute top-2 right-2 z-10 p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white/90 dark:bg-slate-900/90 text-slate-500 dark:text-gray-400 opacity-0 focus:opacity-100 group-hover:opacity-100 hover:text-red-600 dark:hover:text-red-300 hover:border-red-400/60 transition" tabindex="0">'
-      + '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>'
+      + ' class="absolute top-2.5 right-2.5 z-10 p-2 rounded-xl border border-white/50 dark:border-white/10 bg-white/75 dark:bg-slate-900/60 backdrop-blur-md text-slate-500 dark:text-gray-400 shadow-sm '
+      + 'opacity-0 translate-y-1 scale-95 group-hover:opacity-100 group-hover:translate-y-0 group-hover:scale-100 focus:opacity-100 focus:translate-y-0 focus:scale-100 '
+      + ' hover:bg-red-50/95 dark:hover:bg-red-500/15 hover:text-red-600 dark:hover:text-red-400 hover:border-red-300/70 dark:hover:border-red-500/40 hover:shadow-md active:scale-90'
+      + ' transition-all duration-200 ease-out" tabindex="0">'
+      + '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>'
       + '<span class="sr-only">Delete</span></button>'
       + '<a href="/watch/' + id + '/" class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-gradient-to-b from-white to-violet-50/60 dark:bg-slate-900/50 dark:bg-none overflow-hidden shadow-sm ring-1 ring-slate-900/5 dark:ring-0 hover:shadow-xl hover:-translate-y-1 hover:border-violet-400/60 dark:hover:border-violet-500/50 transition block">' +
       '<div class="relative aspect-video bg-black">' +
