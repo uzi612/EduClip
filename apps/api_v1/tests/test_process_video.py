@@ -221,6 +221,129 @@ def test_task_failure_marks_failed():
             raise AssertionError("expected failure to propagate")
     video.reload()
     assert video.status == "failed" and video.error
+    assert video.progress == 0.0
+
+
+def test_transient_failure_keeps_processing_for_retry():
+    _clean()
+    from celery.exceptions import Retry
+
+    from apps.videos.video_service import get_or_create_video
+
+    video, _ = get_or_create_video(VID, META)
+    with patch("apps.videos.transcribe.transcribe_video",
+               side_effect=TranscriptUnavailableError("rate limited", retryable=True)):
+        try:
+            process_video_task.run(str(video.id))
+        except (Retry, TranscriptUnavailableError):
+            pass  # retry scheduled (bare .run re-raises the original) — not terminal
+        else:
+            raise AssertionError("expected failure propagation to the worker")
+    video.reload()
+    assert video.status != "failed"
+    assert video.status == "processing"
+
+
+def test_exhausted_failure_marks_failed_without_more_retries():
+    _clean()
+    from celery.exceptions import Retry
+
+    from apps.videos.video_service import get_or_create_video
+
+    video, _ = get_or_create_video(VID, META)
+    process_video_task.push_request(retries=process_video_task.max_retries)
+    try:
+        with patch("apps.videos.transcribe.transcribe_video",
+                   side_effect=TranscriptUnavailableError("still gone", retryable=True)):
+            try:
+                process_video_task.run(str(video.id))
+            except Retry:
+                raise AssertionError("final attempt must not schedule another retry")
+            except Exception:
+                pass  # original error re-raised to terminate the task
+    finally:
+        process_video_task.pop_request()
+    video.reload()
+    assert video.status == "failed" and video.error
+    assert video.progress == 0.0
+
+
+def test_displaced_task_is_superseded_noop():
+    _clean()
+    from apps.videos.video_service import get_or_create_video
+
+    video, _ = get_or_create_video(VID, META)
+    video.update(set__task_id="task-new", set__status="queued")
+    process_video_task.push_request()
+    try:
+        process_video_task.request.id = "task-old"  # a stale retry wakes up
+        with patch("apps.videos.transcribe.transcribe_video") as tt, patch(
+            "apps.analytics.pipeline.run_analysis") as ra:
+            out = process_video_task.run(str(video.id))
+        tt.assert_not_called()
+        ra.assert_not_called()
+    finally:
+        process_video_task.pop_request()
+    video.reload()
+    assert video.status == "queued"
+    assert out.get("status") == "superseded"
+
+
+def test_owned_task_with_matching_id_processes():
+    _clean()
+    from apps.videos.video_service import get_or_create_video
+
+    video, _ = get_or_create_video(VID, META)
+    video.update(set__task_id="task-new")
+    process_video_task.push_request()
+    try:
+        process_video_task.request.id = "task-new"
+        segs = [{"start": 0.0, "duration": 5.0, "text": "atp atp"}]
+        with patch("apps.videos.transcribe.transcribe_video",
+                   return_value=(segs, "atp atp", "youtube_captions")), patch(
+            "apps.analytics.pipeline.run_analysis", return_value=dict(ANALYSIS)):
+            out = process_video_task.run(str(video.id))
+    finally:
+        process_video_task.pop_request()
+    assert out["status"] == "ready"
+
+
+def test_ready_flip_waits_for_side_collections():
+    _clean()
+    from apps.videos.video_service import get_or_create_video
+
+    video, _ = get_or_create_video(VID, META)
+    with patch("apps.videos.transcribe.transcribe_video",
+               return_value=([{"start": 0.0, "duration": 5.0, "text": "atp"}],
+                             "atp", "youtube_captions")), patch(
+        "apps.analytics.pipeline.run_analysis", return_value=dict(ANALYSIS)), patch(
+        "apps.flashcards.models.Flashcard.objects") as fobjs:
+        fobjs.return_value.delete.side_effect = RuntimeError("simulated crash")
+        try:
+            process_video_task.run(str(video.id))
+        except Exception:
+            pass  # RuntimeError or celery Retry — either way the crash happened
+    video.reload()
+    assert video.status == "analyzing", video.status
+    assert video.progress == 0.7
+
+
+def test_checkpoint_updates_bump_updated_at():
+    import datetime as dt
+
+    from apps.videos.video_service import get_or_create_video
+
+    _clean()
+    video, _ = get_or_create_video(VID, META)
+    old = dt.datetime(2024, 1, 1)
+    video.update(set__updated_at=old)
+    segs = [{"start": 0.0, "duration": 5.0, "text": "atp atp atp"}]
+    with patch("apps.videos.transcribe.transcribe_video",
+               return_value=(segs, "atp atp atp", "youtube_captions")), patch(
+        "apps.analytics.pipeline.run_analysis", return_value=dict(ANALYSIS)):
+        process_video_task.run(str(video.id))
+    video.reload()
+    assert video.updated_at > old
 
 
 if __name__ == "__main__":
