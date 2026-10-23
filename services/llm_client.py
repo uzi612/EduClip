@@ -47,9 +47,13 @@ timestamps, return STRICT JSON with exactly these keys:
   "summary": str (<=500 chars)}], covering the whole video, each >=30 seconds.
 - keywords: [{"term": str, "score": float 0-1}] (5-10 key domain terms).
 - flashcards: 8-12 items [{"front": str (question, <=140 chars),
-  "back": str (answer, <=300 chars), "timestamp_sec": int}].
+  "back": str (answer, <=300 chars), "timestamp_sec": int,
+  "difficulty": "easy"|"medium"|"hard",
+  "tags": [0-2 short topical tags, each <=30 chars]}].
   Ask at least 5 content-grounded questions (no generic filler like "What is
   the main idea?"); every card must be answerable from the transcript.
+  Spread the card timestamps across the whole video: at least one card per
+  chapter, never clustered on a single section.
 - mcqs: 4-5 items [{"question": str (<=200 chars),
   "options": [exactly 4 answer strings, each <=200 chars],
   "answer_index": int 0-3 pointing at the single correct option,
@@ -288,6 +292,42 @@ def _validate_shape(payload):
     if not isinstance(payload.get("mcqs"), list) or not payload["mcqs"]:
         raise LLMError("LLM payload has no mcqs.", retryable=False)
     return payload
+
+
+DIFFICULTIES = ("easy", "medium", "hard")
+
+
+def clean_flashcard(raw):
+    """Validate one raw flashcard dict. Returns a clean dict or None to drop.
+
+    Mirrors the mongoengine Flashcard field limits (front<=140, back<=300,
+    tags<=30 chars) so pipeline output can persist without silent truncation
+    surprises. Unknown/garbled difficulty degrades to "medium", tags are
+    whitespace-trimmed, deduped case-insensitively and capped at 3.
+    """
+    if not isinstance(raw, dict):
+        return None
+    front = " ".join(str(raw.get("front", "")).split())[:140]
+    back = " ".join(str(raw.get("back", "")).split())[:300]
+    if not front or not back:
+        return None
+    try:
+        ts = max(0, int(float(raw.get("timestamp_sec", 0))))
+    except (TypeError, ValueError):
+        ts = 0
+    difficulty = str(raw.get("difficulty", "medium")).strip().lower()
+    if difficulty not in DIFFICULTIES:
+        difficulty = "medium"
+    tags, seen = [], set()
+    for tag in (raw.get("tags") or [])[:3]:
+        tag = " ".join(str(tag).split())
+        if not tag or len(tag) > 30:
+            continue  # oversized tags are model noise — drop, don't truncate
+        if tag.lower() not in seen:
+            seen.add(tag.lower())
+            tags.append(tag)
+    return {"front": front, "back": back, "timestamp_sec": ts,
+            "difficulty": difficulty, "tags": tags}
 
 
 def clean_mcq(item):

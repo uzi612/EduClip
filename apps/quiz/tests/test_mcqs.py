@@ -140,6 +140,50 @@ def test_task_persists_mcqs_and_endpoint_serves():
     assert MCQ.objects.count() == 0  # cascade
 
 
+def test_task_persists_flashcard_difficulty_tags_and_spread():
+    from apps.flashcards.models import Flashcard
+    from apps.videos.tasks import process_video_task
+    from apps.videos.video_service import get_or_create_video
+
+    _clean()
+    video, _ = get_or_create_video("dQw4w9WgXcQ", META)
+    segs = [{"start": 0.0, "duration": 5.0, "text": "chlorophyll lesson"}]
+    analysis = {"summary": "S",
+                "chapters": [{"index": 0, "title": "A", "start_sec": 0, "end_sec": 300,
+                              "summary": "", "keyword_refs": []},
+                             {"index": 1, "title": "B", "start_sec": 300, "end_sec": 600,
+                              "summary": "", "keyword_refs": []}],
+                "keywords": [], "stats": {}, "complexity": {}, "graphs": {},
+                "flashcards": [
+                    {"front": "Q1?", "back": "A1", "timestamp_sec": 10,
+                     "difficulty": "hard", "tags": ["Pigments", "bad tag too long " + "x" * 40]},
+                    {"front": "Q2?", "back": "A2", "timestamp_sec": 20,
+                     "difficulty": "nonsense", "tags": []},
+                    {"front": "   ", "back": "empty front dropped", "timestamp_sec": 30}],
+                "mcqs": [], "degraded": False}
+    with override_settings(MONGODB_ATLAS_URI=""), patch(
+        "apps.videos.transcribe.transcribe_video",
+        return_value=(segs, "chlorophyll lesson", "youtube_captions")), patch(
+        "apps.analytics.pipeline.run_analysis", return_value=analysis):
+        assert process_video_task.run(str(video.id))["status"] == "ready"
+    video.reload()
+    assert video.flashcard_count == 2
+    cards = list(Flashcard.objects(video_id=video))
+    assert len(cards) == 2
+    first = next(c for c in cards if c.front == "Q1?")
+    assert first.difficulty == "hard"
+    assert first.tags == ["Pigments"]  # oversized tag dropped, not truncated
+    second = next(c for c in cards if c.front == "Q2?")
+    assert second.difficulty == "medium"  # nonsense difficulty degraded
+    client = APIClient(HTTP_HOST="testserver")
+    with override_settings(MONGODB_ATLAS_URI=""):
+        served = client.get(f"/api/v1/video/{video.id}/flashcards?page=1&page_size=10",
+                            HTTP_HOST="testserver").json()
+    assert served["flashcards"][0]["difficulty"] == "hard"
+    assert served["flashcards"][0]["tags"] == ["Pigments"]
+    assert served["flashcards"][1]["difficulty"] == "medium"
+
+
 def test_mcqs_unknown_video_404s():
     from bson import ObjectId
 
