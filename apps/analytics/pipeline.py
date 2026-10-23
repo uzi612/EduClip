@@ -167,14 +167,17 @@ def degraded_analysis(segments, title, duration_sec):
     }
 
 
-def run_analysis(segments, title, duration_sec, provider=None):
+def run_analysis(segments, title, duration_sec, provider=None, language="en"):
     """Full pipeline. Returns store-ready dict with degraded flag.
 
     Raises only degraded_analysis output on LLM failure (never propagates).
+    `language` localizes the OUTPUT (summary/chapters/keywords/flashcards/
+    MCQs) to the user-selected transcript language.
     """
     full_text = " ".join(s.get("text", "") for s in (segments or []))
     try:
-        raw = llm_client.analyze_video(segments, title, provider=provider)
+        raw = llm_client.analyze_video(
+            segments, title, provider=provider, language=language)
     except Exception:
         return degraded_analysis(segments, title, duration_sec)
     try:

@@ -2,6 +2,7 @@
 from rest_framework import serializers
 
 from services.youtube import extract_video_id
+from services.llm_client import OUTPUT_LANGUAGE_NAMES
 
 YOUTUBE_URL_HELP = "Expected youtube.com/watch?v=..., youtu.be/..., or youtube.com/shorts/..."
 
@@ -26,8 +27,11 @@ class ProcessVideoSerializer(serializers.Serializer):
             flashcard_count = int(opts.get("flashcard_count", 10))
         except (TypeError, ValueError):
             flashcard_count = 10
+        lang = str(opts.get("language", "en")).strip().lower()[:10]
+        if lang not in OUTPUT_LANGUAGE_NAMES:
+            lang = "en"
         return {
-            "language": str(opts.get("language", "en"))[:10],
+            "language": lang,
             "flashcard_count": max(5, min(20, flashcard_count)),
             "include_analytics": bool(opts.get("include_analytics", True)),
         }

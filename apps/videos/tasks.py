@@ -81,7 +81,8 @@ def process_video_task(self, video_id):
         )
         video.reload()
         logger.info("task analyzing: task_id=%s video_id=%s", task_id, video_id)
-        result = run_analysis(segments, video.title, video.duration_sec)
+        result = run_analysis(segments, video.title, video.duration_sec,
+                              language=lang)
         cards = result.get("flashcards", [])[:20]
         questions = result.get("mcqs", [])[:8]
         video.update(
