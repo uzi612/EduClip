@@ -208,31 +208,6 @@ html.dark .landing-input {
   opacity: 0.6;
 }
 
-/* ---------- demo chips ---------- */
-.demo-chip {
-  padding: 0.45rem 1rem;
-  border-radius: 9999px;
-  border: 1px solid #e2e8f0;
-  background: #fff;
-  color: #475569;
-  font-size: 0.82rem;
-  transition: border-color 0.2s ease, color 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
-}
-.demo-chip:hover {
-  border-color: rgba(139, 92, 246, 0.6);
-  color: #0f172a;
-  transform: translateY(-1px);
-  box-shadow: 0 8px 20px -10px rgba(124, 58, 237, 0.5);
-}
-html.dark .demo-chip {
-  border-color: #1e293b;
-  background: rgba(15, 23, 42, 0.5);
-  color: #9ca3af;
-}
-html.dark .demo-chip:hover {
-  color: #f3f4f6;
-}
-
 /* ---------- transcript language select ---------- */
 .lang-select {
   appearance: none;
@@ -688,5 +663,5 @@ html.dark .laptop-base {
 
 @media (prefers-reduced-motion: reduce) {
   .mock-card { animation: none; }
-  .feature-card:hover, .demo-chip:hover { transform: none; }
+  .feature-card:hover { transform: none; }
 }
