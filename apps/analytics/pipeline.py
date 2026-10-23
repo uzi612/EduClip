@@ -58,6 +58,64 @@ def _uniform_chapters(duration, words_per_sec=2.5, full_text=""):
 
 MIN_FLASHCARDS = 5
 MCQ_TARGET = 5
+FLASHCARD_HARD_CAP = 20
+
+
+def _chapter_index_for_ts(ts, chapters):
+    """Bucket index for a timestamp: containing chapter, else nearest edge."""
+    for i, ch in enumerate(chapters):
+        if int(ch["start_sec"]) <= ts < int(ch["end_sec"]):
+            return i
+    if ts >= int(chapters[-1]["end_sec"]):
+        return len(chapters) - 1
+    return 0
+
+
+def chapter_tags(chapter, stopwords=("part", "section", "video", "intro")):
+    """Topical tags from a chapter title (isalnum tokens, >=3 chars, deduped)."""
+    tags, seen = [], set()
+    for word in str(chapter.get("title", "")).split():
+        token = "".join(c for c in word.lower() if c.isalnum())[:30]
+        if len(token) >= 3 and token not in stopwords and token not in seen:
+            seen.add(token)
+            tags.append(token)
+        if len(tags) >= 2:
+            break
+    return tags
+
+
+def _spread_flashcards(cards, chapters):
+    """Even deck: >=1 card per chapter, drawn from the fullest chapter.
+
+    Donation moves a card (not drops it): the over-represented chapter's
+    card gets re-anchored to the empty chapter's midpoint. Never reorders
+    beyond the final chronological sort, and only acts when the deck is
+    richer than the donor rule allows — decks can't be split thinner than
+    the number of cards available.
+    """
+    if not cards or not chapters or len(chapters) < 2:
+        return sorted(cards, key=lambda c: c["timestamp_sec"])
+    buckets = [[] for _ in chapters]
+    for card in cards:
+        buckets[_chapter_index_for_ts(int(card["timestamp_sec"]),
+                                      chapters)].append(card)
+    for empty_idx, bucket in enumerate(buckets):
+        while not bucket:
+            # A donor must keep >=1 card itself: pick the fullest chapter.
+            donors = [j for j in range(len(buckets)) if len(buckets[j]) > 1]
+            if not donors:
+                break
+            donor = max(donors, key=lambda j: len(buckets[j]))
+            moved = buckets[donor].pop()
+            ch = chapters[empty_idx]
+            mid = int(ch["start_sec"]) + (int(ch["end_sec"]) - int(ch["start_sec"])) // 2
+            buckets[empty_idx].append({**moved,
+                                       "timestamp_sec": max(0, mid)})
+    spread = sorted((card for bucket in buckets for card in bucket),
+                    key=lambda c: c["timestamp_sec"])
+    floor = min(len(chapters), len(spread), FLASHCARD_HARD_CAP)
+    keep = max(min(FLASHCARD_TARGET, len(spread)), floor)
+    return spread[:keep]
 
 GENERIC_REVIEW_PROMPTS = [
     ("What is one key term introduced in this video?", "Replay the section and list the term with its definition."),
@@ -89,6 +147,8 @@ def _fallback_flashcards(chapters, full_text, segments=None):
             "back": (lead or ch.get("summary")
                      or f"Review the segment {ch['start_sec']}s–{ch['end_sec']}s.")[:300],
             "timestamp_sec": ch["start_sec"],
+            "difficulty": "medium",
+            "tags": chapter_tags(ch),
         })
         if len(cards) >= FLASHCARD_TARGET:
             break
@@ -99,7 +159,8 @@ def _fallback_flashcards(chapters, full_text, segments=None):
     while len(cards) < MIN_FLASHCARDS:
         front, back = GENERIC_REVIEW_PROMPTS[i % len(GENERIC_REVIEW_PROMPTS)]
         cards.append({"front": front[:140], "back": back[:300],
-                      "timestamp_sec": anchor + i * 10})
+                      "timestamp_sec": anchor + i * 10,
+                      "difficulty": "medium", "tags": []})
         i += 1
     return cards
 
@@ -178,19 +239,15 @@ def run_analysis(segments, title, duration_sec, provider=None):
     except Exception:
         return degraded_analysis(segments, title, duration_sec)
     try:
+        from services.llm_client import clean_flashcard
+
         chapters = normalize_chapters(raw.get("chapters", []), duration_sec)
         keywords = rescore_keywords(raw.get("keywords", []), full_text)
-        flashcards = []
-        for card in (raw.get("flashcards", []) or [])[:FLASHCARD_TARGET]:
-            front = " ".join(str(card.get("front", "")).split())[:140]
-            back = " ".join(str(card.get("back", "")).split())[:300]
-            if not front or not back:
-                continue
-            try:
-                ts = max(0, int(float(card.get("timestamp_sec", 0))))
-            except (TypeError, ValueError):
-                ts = 0
-            flashcards.append({"front": front, "back": back, "timestamp_sec": ts})
+        flashcards = [clean for clean in
+                      (clean_flashcard(card) for card in
+                       (raw.get("flashcards", []) or [])[:FLASHCARD_HARD_CAP])
+                      if clean]
+        flashcards = _spread_flashcards(flashcards, chapters)
         stats = compute_stats(full_text, [k["term"] for k in keywords])
         from apps.analytics.graphs import build_all_graphs
         from apps.analytics.validators import ChartValidator

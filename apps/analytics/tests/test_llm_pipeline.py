@@ -153,9 +153,71 @@ def test_run_analysis_full_path():
     assert out["degraded"] is False
     assert out["chapters"][-1]["end_sec"] == 842
     assert len(out["flashcards"]) == 2  # empty-front card dropped
-    assert out["flashcards"][0]["timestamp_sec"] == 45
+    stamps = [c["timestamp_sec"] for c in out["flashcards"]]
+    assert stamps == sorted(stamps) and 45 in stamps  # chronological deck
+    assert all(c["difficulty"] in ("easy", "medium", "hard")
+               and isinstance(c["tags"], list) for c in out["flashcards"])
     assert len(out["mcqs"]) == 1 and out["mcqs"][0]["answer_index"] == 0  # bad ones dropped
     assert out["stats"]["word_count"] > 0 and out["complexity"]["type_token_ratio"] > 0
+
+
+def test_clean_flashcard_validates_and_normalizes():
+    from services.llm_client import clean_flashcard
+
+    card = clean_flashcard({"front": "  What captures light?  ",
+                            "back": "Chlorophyll a.", "timestamp_sec": "45.9",
+                            "difficulty": "EASY", "tags": [" Pigments ", "pigments", "  ", "x"]})
+    assert card == {"front": "What captures light?", "back": "Chlorophyll a.",
+                    "timestamp_sec": 45, "difficulty": "easy",
+                    "tags": ["Pigments"]}
+    # Garbage degrades instead of blowing up the deck.
+    assert clean_flashcard({"front": "Q", "back": "A", "difficulty": "impossible"})\
+        ["difficulty"] == "medium"
+    assert clean_flashcard({"front": "Q", "back": "A", "timestamp_sec": "bad"})\
+        ["timestamp_sec"] == 0
+    assert clean_flashcard("not-a-dict") is None
+    assert clean_flashcard({"front": " ", "back": "A"}) is None
+    # Negative timestamps clamp; >3 tags truncated.
+    assert clean_flashcard({"front": "Q", "back": "A", "timestamp_sec": -5,
+                            "tags": ["a", "b", "c", "d", "e"]})["tags"] == ["a", "b", "c"]
+    # Oversized tags are dropped, never truncated into garbage fragments.
+    assert clean_flashcard({"front": "Q", "back": "A",
+                            "tags": ["ok", "x" * 40]})["tags"] == ["ok"]
+
+
+def test_spread_flashcards_one_card_per_chapter():
+    chapters = [{"index": 0, "title": "A", "start_sec": 0, "end_sec": 300},
+                {"index": 1, "title": "B", "start_sec": 300, "end_sec": 600},
+                {"index": 2, "title": "C", "start_sec": 600, "end_sec": 900}]
+    # LLM clustered everything into chapter 0 — spread must donate.
+    cards = [{"front": f"Q{i}?", "back": "A", "timestamp_sec": 10 + i,
+              "difficulty": "medium", "tags": []} for i in range(9)]
+
+    out = pipeline._spread_flashcards(cards, chapters)
+
+    assert len(out) == 9
+    by_chapter = [0, 0, 0]
+    for card in out:
+        by_chapter[pipeline._chapter_index_for_ts(card["timestamp_sec"], chapters)] += 1
+    assert min(by_chapter) >= 1, by_chapter
+    stamps = [c["timestamp_sec"] for c in out]
+    assert stamps == sorted(stamps)  # chronological deck order
+    # Donated cards are re-anchored inside the previously-empty chapters.
+    assert any(300 <= t < 600 for t in stamps), stamps
+    assert any(600 <= t < 900 for t in stamps), stamps
+
+
+def test_spread_flashcards_small_deck_keeps_all_cards():
+    chapters = [{"index": 0, "title": "A", "start_sec": 0, "end_sec": 300},
+                {"index": 1, "title": "B", "start_sec": 300, "end_sec": 600}]
+    pairs = [{"front": "Q1", "back": "A", "timestamp_sec": 5,
+              "difficulty": "hard", "tags": ["chlorophyll"]},
+             {"front": "Q2", "back": "A", "timestamp_sec": 15,
+              "difficulty": "easy", "tags": []}]
+    out = pipeline._spread_flashcards(pairs, chapters)
+    assert len(out) == 2  # huge decks shrink to target; small decks keep every card
+    assert out[0]["timestamp_sec"] == 5 and out[0]["difficulty"] in ("hard",)
+    assert 300 <= out[1]["timestamp_sec"] < 600  # donated into the empty chapter
 
 
 def test_run_analysis_degraded_fallback():

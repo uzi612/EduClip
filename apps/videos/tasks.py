@@ -56,7 +56,11 @@ def process_video_task(self, video_id):
         video.reload()
         logger.info("task analyzing: task_id=%s video_id=%s", task_id, video_id)
         result = run_analysis(segments, video.title, video.duration_sec)
-        cards = result.get("flashcards", [])[:20]
+        from services.llm_client import clean_flashcard
+
+        # Defensive: one malformed card must never kill the whole task.
+        cards = [c for c in (clean_flashcard(card) for card in
+                             result.get("flashcards", [])) if c][:20]
         questions = result.get("mcqs", [])[:8]
         video.update(
             set__summary=result.get("summary", ""),
@@ -79,7 +83,9 @@ def process_video_task(self, video_id):
         Flashcard.objects(video_id=video).delete()
         for card in cards:
             Flashcard(video_id=video, front=card["front"], back=card["back"],
-                      timestamp_sec=card.get("timestamp_sec", 0)).save()
+                      timestamp_sec=card["timestamp_sec"],
+                      difficulty=card["difficulty"],
+                      tags=card["tags"]).save()
         from apps.quiz.models import MCQ
 
         MCQ.objects(video_id=video).delete()
