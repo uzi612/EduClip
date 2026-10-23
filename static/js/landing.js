@@ -176,14 +176,6 @@
     if (input) input.addEventListener("input", clearError);
   }
 
-  document.addEventListener("click", function (e) {
-    var btn = e.target.closest("[data-demo]");
-    if (!btn || !input || !form) return;
-    input.value = btn.getAttribute("data-demo");
-    clearError();
-    input.focus();
-  });
-
   /* ---------- recent grid ---------- */
 
   var STATUS_BADGE = {

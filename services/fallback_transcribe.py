@@ -98,6 +98,7 @@ def whisper_transcribe(youtube_id, language="en", model_size="base"):
                 "format": "bestaudio/best", "outtmpl": target,
                 "postprocessors": [{"key": "FFmpegExtractAudio", "preferredcodec": "mp3"}],
                 "quiet": True, "no_warnings": True,
+                "socket_timeout": 20,
             }) as ydl:
                 info = ydl.extract_info(f"https://www.youtube.com/watch?v={youtube_id}", download=True)
                 audio_path = ydl.prepare_filename(info).rsplit(".", 1)[0] + ".mp3"

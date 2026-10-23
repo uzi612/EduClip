@@ -208,29 +208,58 @@ html.dark .landing-input {
   opacity: 0.6;
 }
 
-/* ---------- demo chips ---------- */
-.demo-chip {
-  padding: 0.45rem 1rem;
-  border-radius: 9999px;
+/* ---------- transcript language select ---------- */
+.lang-select {
+  appearance: none;
+  -webkit-appearance: none;
+  color-scheme: light;
+  padding: 0.5rem 2.2rem 0.5rem 0.9rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #334155;
+  background-color: #fff;
   border: 1px solid #e2e8f0;
-  background: #fff;
-  color: #475569;
-  font-size: 0.82rem;
-  transition: border-color 0.2s ease, color 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
+  border-radius: 9999px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.8rem center;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+  cursor: pointer;
 }
-.demo-chip:hover {
+.lang-select:hover {
+  border-color: rgba(139, 92, 246, 0.5);
+}
+.lang-select:focus-visible {
+  outline: none;
   border-color: rgba(139, 92, 246, 0.6);
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.25);
+}
+.lang-select option {
   color: #0f172a;
-  transform: translateY(-1px);
-  box-shadow: 0 8px 20px -10px rgba(124, 58, 237, 0.5);
+  background-color: #ffffff;
+  font-weight: 400;
+  padding: 0.4rem 0.75rem;
 }
-html.dark .demo-chip {
+.lang-select option:checked,
+.lang-select option:hover {
+  color: #7c3aed;
+  background-color: #f5f3ff;
+}
+html.dark .lang-select {
+  color-scheme: dark;
+  color: #e2e8f0;
+  background-color: rgba(15, 23, 42, 0.7);
   border-color: #1e293b;
-  background: rgba(15, 23, 42, 0.5);
-  color: #9ca3af;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
 }
-html.dark .demo-chip:hover {
-  color: #f3f4f6;
+html.dark .lang-select option {
+  color: #e2e8f0;
+  background-color: #0f172a;
+}
+html.dark .lang-select option:checked,
+html.dark .lang-select option:hover {
+  color: #c4b5fd;
+  background-color: #1e1b4b;
 }
 
 /* ---------- hero visual composition ---------- */
@@ -634,5 +663,5 @@ html.dark .laptop-base {
 
 @media (prefers-reduced-motion: reduce) {
   .mock-card { animation: none; }
-  .feature-card:hover, .demo-chip:hover { transform: none; }
+  .feature-card:hover { transform: none; }
 }

@@ -16,10 +16,17 @@ logger = logging.getLogger(__name__)
 
 OPENAI_MODEL = "gpt-4o-mini"
 OPENAI_TIMEOUT_SEC = 60
-GEMINI_TIMEOUT_SEC = 60
+GEMINI_TIMEOUT_SEC = 120
+GEMINI_TIMEOUT_MS = GEMINI_TIMEOUT_SEC * 1000
 # Fallback default only — settings.GEMINI_MODEL (env GEMINI_MODEL) wins, since
-# identifiers rot (1.5-flash, then 2.5-flash were both retired for new users).
-GEMINI_MODEL = "gemini-3.8-flash"
+# identifiers rot (2.5-flash retired for new keys; 3.8-flash chronically 504s —
+# live-verified Oct 2026 — while 3.5-flash-lite answers in ~1.6s).
+GEMINI_MODEL = "gemini-3.5-flash-lite"
+# Room for Gemini 3.x thinking tokens on top of the JSON body; the old 3000
+# budget combined the two and truncated long-ish payloads into invalid JSON.
+GEMINI_MAX_OUTPUT_TOKENS = 6000
+# Stable sibling used when GEMINI_MODEL 504s/flakes (live-verified Oct 2026).
+GEMINI_FALLBACK_MODEL = "gemini-3.5-flash"
 MAX_TRANSCRIPT_SEGMENTS = 800
 MAX_RETRIES = 2
 # Exponential backoff for LLM timeouts/quota (BACKEND-06): delay before the
@@ -54,7 +61,42 @@ timestamps, return STRICT JSON with exactly these keys:
   "timestamp_sec": int}]. Distractors must be plausible but clearly wrong
   given the video; vary the correct position across questions.
 Return JSON only, no markdown fences.
-CRITICAL CONSTRAINT: You must generate all summaries, titles, chapter breakdowns, key terms, flashcards, and notes strictly in English, regardless of the input language of the video transcript."""
+An output-language constraint is appended to this prompt; obey it for every generated text. DO NOT invent extra keys."""
+
+OUTPUT_LANGUAGE_NAMES = {
+    "en": "English",
+    "es": "Spanish",
+    "hi": "Hindi",
+    "fr": "French",
+    "de": "German",
+    "pt": "Portuguese",
+}
+
+
+def output_language_instruction(language):
+    """Prompt line controlling the OUTPUT language of every generated text.
+
+    The deliberate default keeps production output English-first (the original
+    contract); callers pass the user-selected transcript language to localize
+    the whole dashboard locally — no second LLM round-trip.
+    """
+    lang = (language or "en").strip().lower()[:10]
+    if not lang or lang == "en" or lang not in OUTPUT_LANGUAGE_NAMES:
+        return ("CRITICAL OUTPUT CONSTRAINT: Write every text field (summary, "
+                "chapter titles and summaries, key terms, flashcard fronts and "
+                "backs, MCQ questions, options, and explanations) strictly in "
+                "English, regardless of the transcript's language.")
+    return (
+        f"CRITICAL OUTPUT CONSTRAINT: The user selected {OUTPUT_LANGUAGE_NAMES[lang]}. "
+        f"Write every text field (summary, chapter titles and summaries, key "
+        f"terms, flashcard fronts and backs, MCQ questions, options, and "
+        f"explanations) in natural, learner-friendly {OUTPUT_LANGUAGE_NAMES[lang]}. "
+        f"Keep the JSON keys and integer fields exactly as specified; only the "
+        f"human-readable strings are written in {OUTPUT_LANGUAGE_NAMES[lang]}. "
+        f"If the transcript is already in "
+        f"{OUTPUT_LANGUAGE_NAMES[lang]}, still polish the output into that language."
+    )
+
 
 _cache: dict = {}
 
@@ -92,7 +134,7 @@ def _provider_name(explicit=None):
         return "openai"
 
 
-def _call_openai(transcript, title):
+def _call_openai(transcript, title, language="en"):
     try:
         from openai import OpenAI
     except ImportError as exc:
@@ -121,7 +163,8 @@ def _call_openai(transcript, title):
             temperature=0.3,
             max_tokens=3000,
             messages=[
-                {"role": "system", "content": SYSTEM_PROMPT},
+                {"role": "system",
+                 "content": SYSTEM_PROMPT + "\n" + output_language_instruction(language)},
                 {"role": "user", "content": f"TITLE: {title}\nTRANSCRIPT:\n{transcript}"},
             ],
         )
@@ -137,12 +180,67 @@ def _call_openai(transcript, title):
                        provider="openai") from exc
 
 
-def _call_gemini(transcript, title):
+def _gemini_model_candidates():
+    """Configured model first, then a stable fallback if the primary flakes."""
     try:
-        import google.generativeai as genai
+        from django.conf import settings as _dj_settings
+
+        model_id = getattr(_dj_settings, "GEMINI_MODEL", "") or GEMINI_MODEL
+    except Exception:
+        model_id = GEMINI_MODEL
+    models = [model_id]
+    if GEMINI_FALLBACK_MODEL and model_id != GEMINI_FALLBACK_MODEL:
+        models.append(GEMINI_FALLBACK_MODEL)
+    return models
+
+
+def _call_gemini_model(client, model_id, prompt, system):
+    from google.genai import types as genai_types
+
+    try:
+        from django.conf import settings as _dj_settings
+
+        model_version = _dj_settings.GEMINI_MODEL or GEMINI_MODEL
+    except Exception:
+        model_version = GEMINI_MODEL
+    model_family = model_id or model_version
+    temperature = None if model_family.startswith(("gemini-3", "gemini-4")) else 0.3
+    config = genai_types.GenerateContentConfig(
+        system_instruction=system,
+        response_mime_type="application/json",
+        max_output_tokens=GEMINI_MAX_OUTPUT_TOKENS,
+        thinking_config=genai_types.ThinkingConfig(thinking_level="low")
+        if model_family.startswith(("gemini-3", "gemini-4")) else None,
+    )
+    if temperature is not None:
+        config.temperature = temperature
+    resp = client.models.generate_content(
+        model=model_id,
+        contents=prompt,
+        config=config,
+    )
+    text = (getattr(resp, "text", "") or "").strip()
+    if not text:
+        raise LLMError(f"Gemini returned an empty payload for {model_id}.",
+                       retryable=True, provider="gemini")
+    return json.loads(text)
+
+
+def _call_gemini(transcript, title, language="en"):
+    """Modern google-genai path (google-generativeai is dead — 504-prone).
+
+    Two concrete fixes for the 504 'Deadline expired' stream: the old SDK used
+    the model's default 'medium' thinking on an unbounded deadline, so a long
+    transcript died at 60s and the degraded (English) fallback won. Now:
+    thinking_level='low' for Gemini 3.x, a hard 120s HTTP deadline, and a
+    stable fallback model when the primary one flakes.
+    """
+    try:
+        from google import genai
+        from google.genai import types as genai_types
     except ImportError as exc:
-        raise LLMError("google-generativeai is not installed.", retryable=False,
-                       provider="gemini") from exc
+        raise LLMError("google-genai is not installed (pip install google-genai).",
+                       retryable=False, provider="gemini") from exc
     try:
         from django.conf import settings
 
@@ -155,39 +253,32 @@ def _call_gemini(transcript, title):
             "to generate video insights.",
             retryable=False, provider="gemini",
         )
-    try:
-        from django.conf import settings as _dj_settings
-
-        model_id = getattr(_dj_settings, "GEMINI_MODEL", "") or GEMINI_MODEL
-    except Exception:
-        model_id = GEMINI_MODEL
-    logger.info("llm call start: provider=gemini model=%s title=%.60s chars=%d",
-                model_id, title, len(transcript))
+    system = SYSTEM_PROMPT + "\n" + output_language_instruction(language)
+    prompt = f"TITLE: {title}\nTRANSCRIPT:\n{transcript}"
+    client = genai.Client(
+        api_key=api_key,
+        http_options=genai_types.HttpOptions(timeout=GEMINI_TIMEOUT_MS),
+    )
     started = time.perf_counter()
-    try:
-        genai.configure(api_key=api_key)
-        model = genai.GenerativeModel(
-            model_id,
-            system_instruction=SYSTEM_PROMPT,
-            generation_config={"response_mime_type": "application/json",
-                               "temperature": 0.3, "max_output_tokens": 3000},
-        )
-        # request_options timeout: without it a stalled generation hangs the
-        # worker (and the UI) with no error, exactly like the transcript hang.
-        resp = model.generate_content(
-            f"TITLE: {title}\nTRANSCRIPT:\n{transcript}",
-            request_options={"timeout": GEMINI_TIMEOUT_SEC},
-        )
-        payload = json.loads(resp.text)
-        logger.info("llm call done: provider=gemini ms=%d",
-                    int((time.perf_counter() - started) * 1000))
-        return payload
-    except LLMError:
-        raise
-    except Exception as exc:
-        logger.warning("llm call failed: provider=gemini err=%s", exc)
-        raise LLMError(f"Gemini call failed: {exc}", retryable=True,
-                       provider="gemini") from exc
+    last_error = None
+    for model_id in _gemini_model_candidates():
+        logger.info("llm call start: provider=gemini model=%s title=%.60s chars=%d",
+                    model_id, title, len(transcript))
+        try:
+            payload = _call_gemini_model(client, model_id, prompt, system)
+            logger.info("llm call done: provider=gemini model=%s ms=%d",
+                        model_id, int((time.perf_counter() - started) * 1000))
+            return payload
+        except LLMError:
+            raise
+        except Exception as exc:
+            msg = str(exc)
+            retryable = not ("API key" in msg or "api_key" in msg)
+            last_error = LLMError(f"Gemini call failed ({model_id}): {msg}",
+                                  retryable=retryable, provider="gemini")
+            logger.warning("llm call failed: provider=gemini model=%s err=%s",
+                           model_id, msg)
+    raise last_error
 
 
 def _validate_shape(payload):
@@ -260,16 +351,19 @@ def clean_mcq(item):
             "explanation": explanation, "timestamp_sec": ts}
 
 
-def analyze_video(segments, title, provider=None, use_cache=True):
+def analyze_video(segments, title, provider=None, use_cache=True, language="en"):
     """Run the LLM and return the validated raw payload (+_meta).
 
     Raises LLMError on failure / invalid JSON. Post-processing (chapter
     normalization, keyword re-scoring, degraded fallback) lives in
     services/chapterizer.py, services/text_metrics.py and
     apps/analytics/pipeline.py — never trust the LLM blindly.
+    `language` controls the OUTPUT language of every generated text field
+    (summary, chapters, keywords, flashcards, MCQs), not just the transcript.
     """
     full_text = " ".join(s.get("text", "") for s in (segments or []))
-    key = cache_key(full_text)
+    lang = (language or "en").strip().lower()[:10]
+    key = (lang, cache_key(full_text))
     if use_cache and key in _cache:
         cached = dict(_cache[key])
         cached["_meta"] = {"cached": True, "degraded": False}
@@ -281,7 +375,7 @@ def analyze_video(segments, title, provider=None, use_cache=True):
     last_error = LLMError("LLM call failed.", retryable=True, provider=name)
     for attempt in range(MAX_RETRIES + 1):
         try:
-            payload = _validate_shape(caller(transcript, title))
+            payload = _validate_shape(caller(transcript, title, language=lang))
             payload["_meta"] = {"cached": False, "degraded": False, "provider": name}
             if use_cache:
                 _cache[key] = {k: v for k, v in payload.items() if k != "_meta"}
